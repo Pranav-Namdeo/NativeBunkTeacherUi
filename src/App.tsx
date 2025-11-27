@@ -3,32 +3,132 @@ import { StudentSearch } from "./components/StudentSearch";
 import { BottomNav } from "./components/BottomNav";
 import { StudentList } from "./components/StudentList";
 import { Timetable } from "./components/Timetable";
+import { TimetableSelector } from "./components/TimetableSelector";
+import { Calendar } from "./components/Calendar";
 import { RandomRingDialog } from "./components/RandomRingDialog";
+import { ViewRecords } from "./components/ViewRecords";
+import { Notification } from "./components/Notification";
+import { Updates } from "./components/Updates";
+import { HelpAndSupport } from "./components/HelpAndSupport";
+import { Feedback } from "./components/Feedback";
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [randomRingDialogOpen, setRandomRingDialogOpen] = useState(false);
+  const [showViewRecords, setShowViewRecords] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [showUpdates, setShowUpdates] = useState(false);
+  const [showHelpAndSupport, setShowHelpAndSupport] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+  const [selectedSemester, setSelectedSemester] = useState<string | null>(null);
 
   const handleRandomRing = () => {
     setRandomRingDialogOpen(true);
   };
 
+  const handleViewRecords = () => {
+    setShowViewRecords(true);
+  };
+
+  const handleBackFromRecords = () => {
+    setShowViewRecords(false);
+  };
+
+  const handleNotification = () => {
+    setShowNotification(true);
+  };
+
+  const handleBackFromNotification = () => {
+    setShowNotification(false);
+  };
+
+  const handleUpdates = () => {
+    setShowUpdates(true);
+  };
+
+  const handleBackFromUpdates = () => {
+    setShowUpdates(false);
+  };
+
+  const handleHelpAndSupport = () => {
+    setShowHelpAndSupport(true);
+  };
+
+  const handleBackFromHelpAndSupport = () => {
+    setShowHelpAndSupport(false);
+  };
+
+  const handleFeedback = () => {
+    setShowFeedback(true);
+  };
+
+  const handleBackFromFeedback = () => {
+    setShowFeedback(false);
+  };
+
+  const handleTimetableSelect = (branch: string, semester: string) => {
+    setSelectedBranch(branch);
+    setSelectedSemester(semester);
+  };
+
+  const handleChangeTimetableSelection = () => {
+    setSelectedBranch(null);
+    setSelectedSemester(null);
+  };
+
+  // Show Feedback page
+  if (showFeedback) {
+    return <Feedback onBack={handleBackFromFeedback} />;
+  }
+
+  // Show Help and Support page
+  if (showHelpAndSupport) {
+    return <HelpAndSupport onBack={handleBackFromHelpAndSupport} />;
+  }
+
+  // Show Updates page
+  if (showUpdates) {
+    return <Updates onBack={handleBackFromUpdates} />;
+  }
+
+  // Show Notification page
+  if (showNotification) {
+    return <Notification onBack={handleBackFromNotification} />;
+  }
+
+  // Show View Records page
+  if (showViewRecords) {
+    return <ViewRecords onBack={handleBackFromRecords} />;
+  }
+
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-      <TeacherHeader />
+      <TeacherHeader 
+        onViewRecords={handleViewRecords}
+        onNotification={handleNotification}
+        onUpdates={handleUpdates}
+        onHelpAndSupport={handleHelpAndSupport}
+        onFeedback={handleFeedback}
+      />
       {activeTab === "home" && <StudentSearch />}
       
       {/* Main Content - Scrollable */}
       <main className="flex-1 overflow-y-auto pb-6 scrollbar-hide">
         {activeTab === "home" && <StudentList />}
-        {activeTab === "calendar" && (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            Calendar view coming soon...
-          </div>
+        {activeTab === "calendar" && <Calendar />}
+        {activeTab === "timetable" && !selectedBranch && !selectedSemester && (
+          <TimetableSelector onSelect={handleTimetableSelect} />
         )}
-        {activeTab === "timetable" && <Timetable />}
+        {activeTab === "timetable" && selectedBranch && selectedSemester && (
+          <Timetable
+            branch={selectedBranch}
+            semester={selectedSemester}
+            onChangeSelection={handleChangeTimetableSelection}
+          />
+        )}
       </main>
       
       {/* Floating Action Button - Random Ring - Only on Home */}

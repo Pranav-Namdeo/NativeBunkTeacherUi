@@ -2,6 +2,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Badge } from "./ui/badge";
 import { useEffect, useState } from "react";
 import { StudentProfileDialog } from "./StudentProfileDialog";
+import { FilterButtons } from "./FilterButtons";
 
 interface Student {
   id: number;
@@ -228,29 +229,60 @@ function StudentItem({ student, onClick }: { student: Student; onClick: () => vo
 export function StudentList() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<"all" | "active" | "present" | "absent" | "left">("all");
 
   const handleStudentClick = (student: Student) => {
     setSelectedStudent(student);
     setIsProfileOpen(true);
   };
 
+  // Filter students based on selected filter
+  const filteredStudents = mockStudents.filter((student) => {
+    if (selectedFilter === "all") return true;
+    return student.status === selectedFilter;
+  });
+
+  // Calculate counts for each filter
+  const filterCounts = {
+    all: mockStudents.length,
+    active: mockStudents.filter((s) => s.status === "active").length,
+    present: mockStudents.filter((s) => s.status === "present").length,
+    absent: mockStudents.filter((s) => s.status === "absent").length,
+    left: mockStudents.filter((s) => s.status === "left").length,
+  };
+
+  const presentCount = mockStudents.filter((s) => s.status === "active" || s.status === "present").length;
+
   return (
     <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="dark:text-white">Students Attending</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          {mockStudents.filter((s) => s.status === "active" || s.status === "present").length} /{" "}
-          {mockStudents.length} Present
+          {presentCount} / {mockStudents.length} Present
         </p>
       </div>
 
-      {mockStudents.map((student) => (
-        <StudentItem 
-          key={student.id} 
-          student={student} 
-          onClick={() => handleStudentClick(student)}
-        />
-      ))}
+      <FilterButtons 
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        counts={filterCounts}
+      />
+
+      {filteredStudents.length === 0 ? (
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-8 shadow-sm border dark:border-gray-800 text-center">
+          <p className="text-gray-500 dark:text-gray-400">
+            No students found with status: {selectedFilter}
+          </p>
+        </div>
+      ) : (
+        filteredStudents.map((student) => (
+          <StudentItem 
+            key={student.id} 
+            student={student} 
+            onClick={() => handleStudentClick(student)}
+          />
+        ))
+      )}
 
       <StudentProfileDialog 
         open={isProfileOpen} 

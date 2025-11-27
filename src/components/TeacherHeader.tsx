@@ -10,7 +10,15 @@ import { ThemeToggle } from "./ThemeToggle";
 import { TeacherProfileDialog } from "./TeacherProfileDialog";
 import { useState } from "react";
 
-export function TeacherHeader() {
+interface TeacherHeaderProps {
+  onViewRecords?: () => void;
+  onNotification?: () => void;
+  onUpdates?: () => void;
+  onHelpAndSupport?: () => void;
+  onFeedback?: () => void;
+}
+
+export function TeacherHeader({ onViewRecords, onNotification, onUpdates, onHelpAndSupport, onFeedback }: TeacherHeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
@@ -30,7 +38,7 @@ export function TeacherHeader() {
 
         {/* Center: App Name */}
         <h1 className="absolute left-1/2 transform -translate-x-1/2 dark:text-white">
-          Let's Bunk
+          LetsBunk
         </h1>
 
         {/* Right: Theme Toggle & Three Dot Menu */}
@@ -41,11 +49,13 @@ export function TeacherHeader() {
               <MoreVertical className="w-6 h-6 dark:text-white" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>View Records</DropdownMenuItem>
-              <DropdownMenuItem>Notification</DropdownMenuItem>
-              <DropdownMenuItem>Updates</DropdownMenuItem>
-              <DropdownMenuItem>Help and Support</DropdownMenuItem>
-              <DropdownMenuItem>FAQs</DropdownMenuItem>
+              <DropdownMenuItem onClick={onViewRecords}>
+                View Records
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onNotification}>Notification</DropdownMenuItem>
+              <DropdownMenuItem onClick={onUpdates}>Updates</DropdownMenuItem>
+              <DropdownMenuItem onClick={onHelpAndSupport}>Help and Support</DropdownMenuItem>
+              <DropdownMenuItem onClick={onFeedback}>Feedback</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

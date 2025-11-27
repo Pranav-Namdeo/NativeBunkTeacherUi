@@ -1,753 +1,759 @@
-import { useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Pencil, Save, X, Plus, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "./ui/dialog";
+import { Clock, MapPin, Calendar, Grid, RefreshCw, Loader2, Edit, Save, X, Plus, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
-interface TimetableEntry {
-  day: string;
-  slots: {
-    time: string;
-    subject: string;
-    teacher: string;
-    room: string;
-  }[];
+interface TimetableProps {
+  branch: string;
+  semester: string;
+  onChangeSelection: () => void;
 }
 
-// Mock timetable data
-const timetableData: Record<string, Record<string, TimetableEntry[]>> = {
-  "Computer Science": {
-    "Semester 1": [
-      {
-        day: "Monday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Programming in C", teacher: "Dr. Kumar", room: "Lab 1" },
-          { time: "10:00 - 11:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "11:00 - 12:00", subject: "Physics", teacher: "Dr. Patel", room: "Room 102" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "English", teacher: "Mrs. Singh", room: "Room 103" },
-        ],
-      },
-      {
-        day: "Tuesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "10:00 - 11:00", subject: "Programming in C", teacher: "Dr. Kumar", room: "Lab 1" },
-          { time: "11:00 - 12:00", subject: "Chemistry", teacher: "Dr. Reddy", room: "Lab 2" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Engineering Drawing", teacher: "Mr. Desai", room: "Room 104" },
-        ],
-      },
-      {
-        day: "Wednesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Physics", teacher: "Dr. Patel", room: "Room 102" },
-          { time: "10:00 - 11:00", subject: "Chemistry", teacher: "Dr. Reddy", room: "Lab 2" },
-          { time: "11:00 - 12:00", subject: "Programming in C", teacher: "Dr. Kumar", room: "Lab 1" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-        ],
-      },
-      {
-        day: "Thursday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "English", teacher: "Mrs. Singh", room: "Room 103" },
-          { time: "10:00 - 11:00", subject: "Physics Lab", teacher: "Dr. Patel", room: "Lab 3" },
-          { time: "11:00 - 12:00", subject: "Physics Lab", teacher: "Dr. Patel", room: "Lab 3" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Programming in C", teacher: "Dr. Kumar", room: "Lab 1" },
-        ],
-      },
-      {
-        day: "Friday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "10:00 - 11:00", subject: "Engineering Drawing", teacher: "Mr. Desai", room: "Room 104" },
-          { time: "11:00 - 12:00", subject: "Chemistry Lab", teacher: "Dr. Reddy", room: "Lab 2" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Chemistry Lab", teacher: "Dr. Reddy", room: "Lab 2" },
-        ],
-      },
-    ],
-    "Semester 2": [
-      {
-        day: "Monday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Data Structures", teacher: "Dr. Verma", room: "Lab 1" },
-          { time: "10:00 - 11:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "11:00 - 12:00", subject: "Digital Electronics", teacher: "Dr. Malhotra", room: "Room 202" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Environmental Science", teacher: "Mrs. Iyer", room: "Room 203" },
-        ],
-      },
-      {
-        day: "Tuesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "10:00 - 11:00", subject: "Data Structures", teacher: "Dr. Verma", room: "Lab 1" },
-          { time: "11:00 - 12:00", subject: "Computer Organization", teacher: "Dr. Joshi", room: "Room 204" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Digital Electronics", teacher: "Dr. Malhotra", room: "Room 202" },
-        ],
-      },
-      {
-        day: "Wednesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Digital Electronics Lab", teacher: "Dr. Malhotra", room: "Lab 4" },
-          { time: "10:00 - 11:00", subject: "Digital Electronics Lab", teacher: "Dr. Malhotra", room: "Lab 4" },
-          { time: "11:00 - 12:00", subject: "Data Structures", teacher: "Dr. Verma", room: "Lab 1" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-        ],
-      },
-      {
-        day: "Thursday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Environmental Science", teacher: "Mrs. Iyer", room: "Room 203" },
-          { time: "10:00 - 11:00", subject: "Computer Organization", teacher: "Dr. Joshi", room: "Room 204" },
-          { time: "11:00 - 12:00", subject: "Data Structures Lab", teacher: "Dr. Verma", room: "Lab 1" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Data Structures Lab", teacher: "Dr. Verma", room: "Lab 1" },
-        ],
-      },
-      {
-        day: "Friday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "10:00 - 11:00", subject: "Digital Electronics", teacher: "Dr. Malhotra", room: "Room 202" },
-          { time: "11:00 - 12:00", subject: "Computer Organization", teacher: "Dr. Joshi", room: "Room 204" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Environmental Science", teacher: "Mrs. Iyer", room: "Room 203" },
-        ],
-      },
-    ],
-  },
-  "Electronics": {
-    "Semester 1": [
-      {
-        day: "Monday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Basic Electronics", teacher: "Dr. Rao", room: "Lab 5" },
-          { time: "10:00 - 11:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "11:00 - 12:00", subject: "Physics", teacher: "Dr. Patel", room: "Room 102" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Engineering Mechanics", teacher: "Mr. Nair", room: "Room 105" },
-        ],
-      },
-      {
-        day: "Tuesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "10:00 - 11:00", subject: "Basic Electronics", teacher: "Dr. Rao", room: "Lab 5" },
-          { time: "11:00 - 12:00", subject: "Chemistry", teacher: "Dr. Reddy", room: "Lab 2" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "English", teacher: "Mrs. Singh", room: "Room 103" },
-        ],
-      },
-      {
-        day: "Wednesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Physics", teacher: "Dr. Patel", room: "Room 102" },
-          { time: "10:00 - 11:00", subject: "Chemistry", teacher: "Dr. Reddy", room: "Lab 2" },
-          { time: "11:00 - 12:00", subject: "Basic Electronics Lab", teacher: "Dr. Rao", room: "Lab 5" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Basic Electronics Lab", teacher: "Dr. Rao", room: "Lab 5" },
-        ],
-      },
-      {
-        day: "Thursday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "English", teacher: "Mrs. Singh", room: "Room 103" },
-          { time: "10:00 - 11:00", subject: "Engineering Mechanics", teacher: "Mr. Nair", room: "Room 105" },
-          { time: "11:00 - 12:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Basic Electronics", teacher: "Dr. Rao", room: "Lab 5" },
-        ],
-      },
-      {
-        day: "Friday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Physics Lab", teacher: "Dr. Patel", room: "Lab 3" },
-          { time: "10:00 - 11:00", subject: "Physics Lab", teacher: "Dr. Patel", room: "Lab 3" },
-          { time: "11:00 - 12:00", subject: "Engineering Mechanics", teacher: "Mr. Nair", room: "Room 105" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Chemistry Lab", teacher: "Dr. Reddy", room: "Lab 2" },
-        ],
-      },
-    ],
-    "Semester 2": [
-      {
-        day: "Monday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Circuit Theory", teacher: "Dr. Kapoor", room: "Room 205" },
-          { time: "10:00 - 11:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "11:00 - 12:00", subject: "Network Analysis", teacher: "Dr. Bose", room: "Room 206" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Programming in C", teacher: "Dr. Kumar", room: "Lab 1" },
-        ],
-      },
-      {
-        day: "Tuesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "10:00 - 11:00", subject: "Circuit Theory", teacher: "Dr. Kapoor", room: "Room 205" },
-          { time: "11:00 - 12:00", subject: "Electronic Devices", teacher: "Dr. Menon", room: "Lab 6" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Network Analysis", teacher: "Dr. Bose", room: "Room 206" },
-        ],
-      },
-      {
-        day: "Wednesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Electronic Devices Lab", teacher: "Dr. Menon", room: "Lab 6" },
-          { time: "10:00 - 11:00", subject: "Electronic Devices Lab", teacher: "Dr. Menon", room: "Lab 6" },
-          { time: "11:00 - 12:00", subject: "Circuit Theory", teacher: "Dr. Kapoor", room: "Room 205" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-        ],
-      },
-      {
-        day: "Thursday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Programming in C", teacher: "Dr. Kumar", room: "Lab 1" },
-          { time: "10:00 - 11:00", subject: "Network Analysis", teacher: "Dr. Bose", room: "Room 206" },
-          { time: "11:00 - 12:00", subject: "Circuit Lab", teacher: "Dr. Kapoor", room: "Lab 7" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Circuit Lab", teacher: "Dr. Kapoor", room: "Lab 7" },
-        ],
-      },
-      {
-        day: "Friday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "10:00 - 11:00", subject: "Electronic Devices", teacher: "Dr. Menon", room: "Lab 6" },
-          { time: "11:00 - 12:00", subject: "Network Analysis", teacher: "Dr. Bose", room: "Room 206" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Programming in C", teacher: "Dr. Kumar", room: "Lab 1" },
-        ],
-      },
-    ],
-  },
-  "Mechanical": {
-    "Semester 1": [
-      {
-        day: "Monday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Engineering Graphics", teacher: "Mr. Desai", room: "Room 301" },
-          { time: "10:00 - 11:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "11:00 - 12:00", subject: "Physics", teacher: "Dr. Patel", room: "Room 102" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Workshop Practice", teacher: "Mr. Singh", room: "Workshop" },
-        ],
-      },
-      {
-        day: "Tuesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "10:00 - 11:00", subject: "Engineering Graphics", teacher: "Mr. Desai", room: "Room 301" },
-          { time: "11:00 - 12:00", subject: "Chemistry", teacher: "Dr. Reddy", room: "Lab 2" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "English", teacher: "Mrs. Singh", room: "Room 103" },
-        ],
-      },
-      {
-        day: "Wednesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Physics", teacher: "Dr. Patel", room: "Room 102" },
-          { time: "10:00 - 11:00", subject: "Chemistry", teacher: "Dr. Reddy", room: "Lab 2" },
-          { time: "11:00 - 12:00", subject: "Workshop Practice", teacher: "Mr. Singh", room: "Workshop" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Workshop Practice", teacher: "Mr. Singh", room: "Workshop" },
-        ],
-      },
-      {
-        day: "Thursday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "English", teacher: "Mrs. Singh", room: "Room 103" },
-          { time: "10:00 - 11:00", subject: "Engineering Mechanics", teacher: "Mr. Nair", room: "Room 105" },
-          { time: "11:00 - 12:00", subject: "Mathematics I", teacher: "Prof. Sharma", room: "Room 101" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Engineering Graphics", teacher: "Mr. Desai", room: "Room 301" },
-        ],
-      },
-      {
-        day: "Friday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Physics Lab", teacher: "Dr. Patel", room: "Lab 3" },
-          { time: "10:00 - 11:00", subject: "Physics Lab", teacher: "Dr. Patel", room: "Lab 3" },
-          { time: "11:00 - 12:00", subject: "Engineering Mechanics", teacher: "Mr. Nair", room: "Room 105" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Chemistry Lab", teacher: "Dr. Reddy", room: "Lab 2" },
-        ],
-      },
-    ],
-    "Semester 2": [
-      {
-        day: "Monday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Thermodynamics", teacher: "Dr. Pillai", room: "Room 302" },
-          { time: "10:00 - 11:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "11:00 - 12:00", subject: "Material Science", teacher: "Dr. Chopra", room: "Room 303" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Manufacturing Process", teacher: "Mr. Trivedi", room: "Workshop" },
-        ],
-      },
-      {
-        day: "Tuesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "10:00 - 11:00", subject: "Thermodynamics", teacher: "Dr. Pillai", room: "Room 302" },
-          { time: "11:00 - 12:00", subject: "Strength of Materials", teacher: "Dr. Agarwal", room: "Room 304" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Material Science", teacher: "Dr. Chopra", room: "Room 303" },
-        ],
-      },
-      {
-        day: "Wednesday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Manufacturing Lab", teacher: "Mr. Trivedi", room: "Workshop" },
-          { time: "10:00 - 11:00", subject: "Manufacturing Lab", teacher: "Mr. Trivedi", room: "Workshop" },
-          { time: "11:00 - 12:00", subject: "Thermodynamics", teacher: "Dr. Pillai", room: "Room 302" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-        ],
-      },
-      {
-        day: "Thursday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Strength of Materials", teacher: "Dr. Agarwal", room: "Room 304" },
-          { time: "10:00 - 11:00", subject: "Material Science", teacher: "Dr. Chopra", room: "Room 303" },
-          { time: "11:00 - 12:00", subject: "Material Lab", teacher: "Dr. Chopra", room: "Lab 8" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Material Lab", teacher: "Dr. Chopra", room: "Lab 8" },
-        ],
-      },
-      {
-        day: "Friday",
-        slots: [
-          { time: "9:00 - 10:00", subject: "Mathematics II", teacher: "Prof. Gupta", room: "Room 201" },
-          { time: "10:00 - 11:00", subject: "Strength of Materials", teacher: "Dr. Agarwal", room: "Room 304" },
-          { time: "11:00 - 12:00", subject: "Manufacturing Process", teacher: "Mr. Trivedi", room: "Workshop" },
-          { time: "12:00 - 1:00", subject: "Break", teacher: "-", room: "-" },
-          { time: "1:00 - 2:00", subject: "Thermodynamics", teacher: "Dr. Pillai", room: "Room 302" },
-        ],
-      },
-    ],
-  },
-};
+interface Period {
+  periodNumber: number;
+  startTime: string;
+  endTime: string;
+  subject: string;
+  room: string;
+  isBreak: boolean;
+}
 
-const branches = ["Computer Science", "Electronics", "Mechanical"];
-const semesters = ["Semester 1", "Semester 2"];
+interface DaySchedule {
+  day: string;
+  periods: Period[];
+}
 
-export function Timetable() {
-  const [selectedBranch, setSelectedBranch] = useState<string>("");
-  const [selectedSemester, setSelectedSemester] = useState<string>("");
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editedTimetable, setEditedTimetable] = useState<TimetableEntry[] | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingSlot, setEditingSlot] = useState<{
-    dayIndex: number;
-    slotIndex: number;
-    slot: { time: string; subject: string; teacher: string; room: string };
-  } | null>(null);
+export function Timetable({ branch, semester, onChangeSelection }: TimetableProps) {
+  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
+  const [timetableData, setTimetableData] = useState<DaySchedule[]>([]);
+  const [originalTimetableData, setOriginalTimetableData] = useState<DaySchedule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [editMode, setEditMode] = useState(false);
+  const [editingPeriod, setEditingPeriod] = useState<{ day: string; index: number } | null>(null);
+  const [editForm, setEditForm] = useState<Period>({
+    periodNumber: 1,
+    startTime: "",
+    endTime: "",
+    subject: "",
+    room: "",
+    isBreak: false,
+  });
 
-  const currentTimetable =
-    selectedBranch && selectedSemester
-      ? isEditMode && editedTimetable
-        ? editedTimetable
-        : timetableData[selectedBranch]?.[selectedSemester]
-      : null;
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-  const handleEditClick = () => {
-    if (currentTimetable) {
-      setEditedTimetable(JSON.parse(JSON.stringify(currentTimetable)));
-      setIsEditMode(true);
-    }
+  useEffect(() => {
+    // Update current time every minute
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Set current day on mount
+    const today = getCurrentDay();
+    setSelectedDay(today);
+    
+    // Simulate API call to fetch timetable
+    fetchTimetable();
+  }, [branch, semester]);
+
+  const getCurrentDay = () => {
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayIndex = new Date().getDay();
+    const today = dayNames[dayIndex];
+    
+    // If it's Sunday, default to Monday
+    if (today === "Sunday") return "Monday";
+    return today;
   };
 
-  const handleSaveChanges = () => {
-    if (editedTimetable && selectedBranch && selectedSemester) {
-      // In a real app, this would save to backend
-      timetableData[selectedBranch][selectedSemester] = editedTimetable;
-      setIsEditMode(false);
-      setEditedTimetable(null);
-    }
+  const fetchTimetable = async () => {
+    setLoading(true);
+    
+    // Simulate API call - Replace with actual API endpoint
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Mock data based on branch and semester
+    const mockData: DaySchedule[] = [
+      {
+        day: "Monday",
+        periods: [
+          { periodNumber: 1, startTime: "09:00", endTime: "10:00", subject: "Data Structures", room: "CS-101", isBreak: false },
+          { periodNumber: 2, startTime: "10:00", endTime: "11:00", subject: "Algorithms", room: "CS-102", isBreak: false },
+          { periodNumber: 0, startTime: "11:00", endTime: "11:15", subject: "Break", room: "", isBreak: true },
+          { periodNumber: 3, startTime: "11:15", endTime: "12:15", subject: "Database Systems", room: "CS-103", isBreak: false },
+          { periodNumber: 4, startTime: "12:15", endTime: "01:15", subject: "Operating Systems", room: "CS-104", isBreak: false },
+          { periodNumber: 0, startTime: "01:15", endTime: "02:00", subject: "Lunch Break", room: "", isBreak: true },
+          { periodNumber: 5, startTime: "02:00", endTime: "03:00", subject: "Computer Networks", room: "CS-105", isBreak: false },
+          { periodNumber: 6, startTime: "03:00", endTime: "04:00", subject: "Software Engineering", room: "CS-106", isBreak: false },
+        ],
+      },
+      {
+        day: "Tuesday",
+        periods: [
+          { periodNumber: 1, startTime: "09:00", endTime: "10:00", subject: "Web Development", room: "CS-201", isBreak: false },
+          { periodNumber: 2, startTime: "10:00", endTime: "11:00", subject: "Machine Learning", room: "CS-202", isBreak: false },
+          { periodNumber: 0, startTime: "11:00", endTime: "11:15", subject: "Break", room: "", isBreak: true },
+          { periodNumber: 3, startTime: "11:15", endTime: "12:15", subject: "Data Structures", room: "CS-101", isBreak: false },
+          { periodNumber: 4, startTime: "12:15", endTime: "01:15", subject: "Algorithms", room: "CS-102", isBreak: false },
+          { periodNumber: 0, startTime: "01:15", endTime: "02:00", subject: "Lunch Break", room: "", isBreak: true },
+          { periodNumber: 5, startTime: "02:00", endTime: "04:00", subject: "DS Lab", room: "Lab-1", isBreak: false },
+        ],
+      },
+      {
+        day: "Wednesday",
+        periods: [
+          { periodNumber: 1, startTime: "09:00", endTime: "10:00", subject: "Database Systems", room: "CS-103", isBreak: false },
+          { periodNumber: 2, startTime: "10:00", endTime: "11:00", subject: "Operating Systems", room: "CS-104", isBreak: false },
+          { periodNumber: 0, startTime: "11:00", endTime: "11:15", subject: "Break", room: "", isBreak: true },
+          { periodNumber: 3, startTime: "11:15", endTime: "12:15", subject: "Computer Networks", room: "CS-105", isBreak: false },
+          { periodNumber: 4, startTime: "12:15", endTime: "01:15", subject: "Software Engineering", room: "CS-106", isBreak: false },
+          { periodNumber: 0, startTime: "01:15", endTime: "02:00", subject: "Lunch Break", room: "", isBreak: true },
+          { periodNumber: 5, startTime: "02:00", endTime: "03:00", subject: "Web Development", room: "CS-201", isBreak: false },
+          { periodNumber: 6, startTime: "03:00", endTime: "04:00", subject: "Machine Learning", room: "CS-202", isBreak: false },
+        ],
+      },
+      {
+        day: "Thursday",
+        periods: [
+          { periodNumber: 1, startTime: "09:00", endTime: "10:00", subject: "Data Structures", room: "CS-101", isBreak: false },
+          { periodNumber: 2, startTime: "10:00", endTime: "11:00", subject: "Algorithms", room: "CS-102", isBreak: false },
+          { periodNumber: 0, startTime: "11:00", endTime: "11:15", subject: "Break", room: "", isBreak: true },
+          { periodNumber: 3, startTime: "11:15", endTime: "12:15", subject: "Database Systems", room: "CS-103", isBreak: false },
+          { periodNumber: 4, startTime: "12:15", endTime: "01:15", subject: "Operating Systems", room: "CS-104", isBreak: false },
+          { periodNumber: 0, startTime: "01:15", endTime: "02:00", subject: "Lunch Break", room: "", isBreak: true },
+          { periodNumber: 5, startTime: "02:00", endTime: "04:00", subject: "OS Lab", room: "Lab-2", isBreak: false },
+        ],
+      },
+      {
+        day: "Friday",
+        periods: [
+          { periodNumber: 1, startTime: "09:00", endTime: "10:00", subject: "Computer Networks", room: "CS-105", isBreak: false },
+          { periodNumber: 2, startTime: "10:00", endTime: "11:00", subject: "Software Engineering", room: "CS-106", isBreak: false },
+          { periodNumber: 0, startTime: "11:00", endTime: "11:15", subject: "Break", room: "", isBreak: true },
+          { periodNumber: 3, startTime: "11:15", endTime: "12:15", subject: "Web Development", room: "CS-201", isBreak: false },
+          { periodNumber: 4, startTime: "12:15", endTime: "01:15", subject: "Machine Learning", room: "CS-202", isBreak: false },
+          { periodNumber: 0, startTime: "01:15", endTime: "02:00", subject: "Lunch Break", room: "", isBreak: true },
+          { periodNumber: 5, startTime: "02:00", endTime: "03:00", subject: "Project Work", room: "CS-301", isBreak: false },
+          { periodNumber: 6, startTime: "03:00", endTime: "04:00", subject: "Seminar", room: "Auditorium", isBreak: false },
+        ],
+      },
+      {
+        day: "Saturday",
+        periods: [
+          { periodNumber: 1, startTime: "09:00", endTime: "10:00", subject: "Data Structures", room: "CS-101", isBreak: false },
+          { periodNumber: 2, startTime: "10:00", endTime: "11:00", subject: "Algorithms", room: "CS-102", isBreak: false },
+          { periodNumber: 0, startTime: "11:00", endTime: "11:15", subject: "Break", room: "", isBreak: true },
+          { periodNumber: 3, startTime: "11:15", endTime: "01:15", subject: "Network Lab", room: "Lab-3", isBreak: false },
+        ],
+      },
+    ];
+
+    setTimetableData(mockData);
+    setOriginalTimetableData(mockData);
+    setLoading(false);
+  };
+
+  const getBranchName = (branchId: string) => {
+    const branches: { [key: string]: string } = {
+      cse: "Computer Science Engineering",
+      ece: "Electronics & Communication",
+      me: "Mechanical Engineering",
+      ce: "Civil Engineering",
+      ee: "Electrical Engineering",
+      it: "Information Technology",
+    };
+    return branches[branchId] || branchId.toUpperCase();
+  };
+
+  const isCurrentPeriod = (period: Period): boolean => {
+    if (selectedDay !== getCurrentDay()) return false;
+    
+    const now = currentTime;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    const [startHour, startMin] = period.startTime.split(":").map(Number);
+    const [endHour, endMin] = period.endTime.split(":").map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+  };
+
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
+  const getSelectedDaySchedule = () => {
+    return timetableData.find(d => d.day === selectedDay);
+  };
+
+  const getDayShort = (day: string) => {
+    return day.substring(0, 3);
+  };
+
+  const handleEnterEditMode = () => {
+    setEditMode(true);
+    setOriginalTimetableData(JSON.parse(JSON.stringify(timetableData)));
   };
 
   const handleCancelEdit = () => {
-    setIsEditMode(false);
-    setEditedTimetable(null);
+    setEditMode(false);
+    setTimetableData(originalTimetableData);
+    setEditingPeriod(null);
   };
 
-  const handleSlotEdit = (dayIndex: number, slotIndex: number) => {
-    if (editedTimetable) {
-      setEditingSlot({
-        dayIndex,
-        slotIndex,
-        slot: { ...editedTimetable[dayIndex].slots[slotIndex] },
+  const handleSaveChanges = async () => {
+    // Simulate API call to save changes
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setEditMode(false);
+    setEditingPeriod(null);
+    // In real app, make API call here
+    alert("Timetable updated successfully!");
+  };
+
+  const handleEditPeriod = (day: string, index: number) => {
+    const daySchedule = timetableData.find(d => d.day === day);
+    if (daySchedule) {
+      setEditingPeriod({ day, index });
+      setEditForm({ ...daySchedule.periods[index] });
+    }
+  };
+
+  const handleDeletePeriod = (day: string, index: number) => {
+    const updatedData = timetableData.map(d => {
+      if (d.day === day) {
+        return {
+          ...d,
+          periods: d.periods.filter((_, i) => i !== index)
+        };
+      }
+      return d;
+    });
+    setTimetableData(updatedData);
+  };
+
+  const handleAddPeriod = (day: string) => {
+    const daySchedule = timetableData.find(d => d.day === day);
+    if (daySchedule) {
+      const maxPeriod = Math.max(...daySchedule.periods.filter(p => !p.isBreak).map(p => p.periodNumber), 0);
+      setEditingPeriod({ day, index: -1 });
+      setEditForm({
+        periodNumber: maxPeriod + 1,
+        startTime: "",
+        endTime: "",
+        subject: "",
+        room: "",
+        isBreak: false,
       });
-      setEditDialogOpen(true);
     }
   };
 
-  const handleSlotUpdate = () => {
-    if (editingSlot && editedTimetable) {
-      const newTimetable = [...editedTimetable];
-      newTimetable[editingSlot.dayIndex].slots[editingSlot.slotIndex] = editingSlot.slot;
-      setEditedTimetable(newTimetable);
-      setEditDialogOpen(false);
-      setEditingSlot(null);
-    }
+  const handleSavePeriod = () => {
+    if (!editingPeriod) return;
+
+    const updatedData = timetableData.map(d => {
+      if (d.day === editingPeriod.day) {
+        if (editingPeriod.index === -1) {
+          // Add new period
+          return {
+            ...d,
+            periods: [...d.periods, editForm].sort((a, b) => {
+              const aTime = parseInt(a.startTime.replace(":", ""));
+              const bTime = parseInt(b.startTime.replace(":", ""));
+              return aTime - bTime;
+            })
+          };
+        } else {
+          // Edit existing period
+          return {
+            ...d,
+            periods: d.periods.map((p, i) => i === editingPeriod.index ? editForm : p)
+          };
+        }
+      }
+      return d;
+    });
+
+    setTimetableData(updatedData);
+    setEditingPeriod(null);
   };
 
-  const handleAddSlot = (dayIndex: number) => {
-    if (editedTimetable) {
-      const newTimetable = [...editedTimetable];
-      newTimetable[dayIndex].slots.push({
-        time: "2:00 - 3:00",
-        subject: "New Subject",
-        teacher: "Teacher Name",
-        room: "Room Number",
-      });
-      setEditedTimetable(newTimetable);
-    }
-  };
-
-  const handleDeleteSlot = (dayIndex: number, slotIndex: number) => {
-    if (editedTimetable) {
-      const newTimetable = [...editedTimetable];
-      newTimetable[dayIndex].slots.splice(slotIndex, 1);
-      setEditedTimetable(newTimetable);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-400">Loading timetable...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-6">
-      {/* Selection Section */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-sm border dark:border-gray-800 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="dark:text-white">Select Timetable</h2>
-          {currentTimetable && !isEditMode && (
-            <Button onClick={handleEditClick} size="sm" className="gap-2">
-              <Pencil className="w-4 h-4" />
-              Edit Timetable
-            </Button>
-          )}
-          {isEditMode && (
-            <div className="flex gap-2">
-              <Button onClick={handleSaveChanges} size="sm" className="gap-2">
-                <Save className="w-4 h-4" />
-                Save Changes
-              </Button>
-              <Button
-                onClick={handleCancelEdit}
-                size="sm"
-                variant="outline"
-                className="gap-2"
-              >
-                <X className="w-4 h-4" />
-                Cancel
-              </Button>
-            </div>
-          )}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Branch Selection */}
+    <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4 space-y-4">
+      {/* Selection Info Card */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border dark:border-gray-800">
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Branch
-            </label>
-            <Select 
-              value={selectedBranch} 
-              onValueChange={(value) => {
-                setSelectedBranch(value);
-                setIsEditMode(false);
-                setEditedTimetable(null);
-              }}
-              disabled={isEditMode}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Branch" />
-              </SelectTrigger>
-              <SelectContent>
-                {branches.map((branch) => (
-                  <SelectItem key={branch} value={branch}>
-                    {branch}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Selected Timetable
+            </p>
+            <h3 className="dark:text-white text-sm">
+              {getBranchName(branch)} - Semester {semester}
+            </h3>
           </div>
-
-          {/* Semester Selection */}
-          <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Semester
-            </label>
-            <Select
-              value={selectedSemester}
-              onValueChange={(value) => {
-                setSelectedSemester(value);
-                setIsEditMode(false);
-                setEditedTimetable(null);
-              }}
-              disabled={!selectedBranch || isEditMode}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Semester" />
-              </SelectTrigger>
-              <SelectContent>
-                {semesters.map((semester) => (
-                  <SelectItem key={semester} value={semester}>
-                    {semester}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2">
+            {!editMode ? (
+              <>
+                <button
+                  onClick={handleEnterEditMode}
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={onChangeSelection}
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Change
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleSaveChanges}
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600 rounded-lg transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Timetable Display - Table Format */}
-      {currentTimetable ? (
+      {/* Edit Mode Banner */}
+      {editMode && (
+        <div className="bg-orange-50 dark:bg-orange-950 rounded-lg p-4 border-2 border-orange-200 dark:border-orange-800">
+          <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+            <Edit className="w-4 h-4" />
+            <p className="text-sm font-medium">
+              Edit Mode Active - You can now modify, add, or delete periods
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* View Toggle */}
+      <div className="flex gap-2 bg-white dark:bg-gray-900 rounded-lg p-1 shadow-sm border dark:border-gray-800">
+        <button
+          onClick={() => setViewMode("day")}
+          className={`flex-1 py-2 px-4 rounded-md transition-all flex items-center justify-center gap-2 ${
+            viewMode === "day"
+              ? "bg-blue-600 dark:bg-blue-500 text-white"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span className="text-sm">Day View</span>
+        </button>
+        <button
+          onClick={() => setViewMode("week")}
+          className={`flex-1 py-2 px-4 rounded-md transition-all flex items-center justify-center gap-2 ${
+            viewMode === "week"
+              ? "bg-blue-600 dark:bg-blue-500 text-white"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Grid className="w-4 h-4" />
+          <span className="text-sm">Week View</span>
+        </button>
+      </div>
+
+      {/* Day Navigation */}
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 min-w-max">
+          {days.map((day) => {
+            const isToday = day === getCurrentDay();
+            const isSelected = day === selectedDay;
+            
+            return (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`px-4 py-3 rounded-lg transition-all whitespace-nowrap ${
+                  isSelected
+                    ? "bg-blue-600 dark:bg-blue-500 text-white shadow-md"
+                    : isToday
+                    ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border-2 border-blue-200 dark:border-blue-800"
+                    : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800"
+                }`}
+              >
+                <div className="text-xs mb-1">
+                  {isToday && !isSelected && "Today"}
+                  {isSelected && "Selected"}
+                  {!isToday && !isSelected && <span className="opacity-0">-</span>}
+                </div>
+                <div className="font-medium">{getDayShort(day)}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Day View */}
+      {viewMode === "day" && (
+        <div className="space-y-3">
+          {getSelectedDaySchedule()?.periods.map((period, index) => {
+            const isCurrent = isCurrentPeriod(period);
+            
+            if (period.isBreak) {
+              return (
+                <div
+                  key={index}
+                  className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border-2 border-yellow-200 dark:border-yellow-800"
+                >
+                  <div className="flex items-center justify-center gap-2 text-yellow-700 dark:text-yellow-400">
+                    <span className="text-xl">☕</span>
+                    <div>
+                      <p className="font-medium">{period.subject}</p>
+                      <p className="text-xs opacity-75">
+                        {period.startTime} - {period.endTime}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={index}
+                className={`rounded-lg p-4 border-2 transition-all ${
+                  isCurrent
+                    ? "bg-green-50 dark:bg-green-950 border-green-500 dark:border-green-600 shadow-lg"
+                    : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        isCurrent
+                          ? "bg-green-500 dark:bg-green-600 text-white"
+                          : "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400"
+                      }`}
+                    >
+                      <span className="font-bold">{period.periodNumber}</span>
+                    </div>
+                    <div>
+                      <h4 className={`font-medium ${isCurrent ? "text-green-900 dark:text-green-100" : "dark:text-white"}`}>
+                        {period.subject}
+                      </h4>
+                      <div className="flex items-center gap-1 mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>
+                          {period.startTime} - {period.endTime}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isCurrent && !editMode && (
+                      <span className="bg-green-500 dark:bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium animate-pulse">
+                        Now
+                      </span>
+                    )}
+                    {editMode && (
+                      <>
+                        <button
+                          onClick={() => handleEditPeriod(selectedDay, index)}
+                          className="p-2 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePeriod(selectedDay, index)}
+                          className="p-2 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-3 text-sm text-gray-600 dark:text-gray-400">
+                  <MapPin className="w-4 h-4" />
+                  <span>{period.room}</span>
+                </div>
+              </div>
+            );
+          })}
+          
+          {/* Add Period Button */}
+          {editMode && (
+            <button
+              onClick={() => handleAddPeriod(selectedDay)}
+              className="w-full py-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add New Period</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Week View */}
+      {viewMode === "week" && (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border dark:border-gray-800 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-blue-600 dark:bg-blue-700">
-                  <th className="px-4 py-3 text-left text-white min-w-[120px]">Time</th>
-                  {currentTimetable.map((daySchedule) => (
-                    <th key={daySchedule.day} className="px-4 py-3 text-center text-white min-w-[200px]">
-                      {daySchedule.day}
+                <tr className="bg-gray-50 dark:bg-gray-800">
+                  <th className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-3 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 border-r dark:border-gray-700">
+                    Period
+                  </th>
+                  {days.map((day) => (
+                    <th
+                      key={day}
+                      className={`px-4 py-3 text-center text-xs font-medium border-r last:border-r-0 dark:border-gray-700 ${
+                        day === getCurrentDay()
+                          ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                          : "text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      <div>{getDayShort(day)}</div>
+                      {day === getCurrentDay() && (
+                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">Today</div>
+                      )}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                {/* Get all unique time slots */}
-                {currentTimetable[0]?.slots.map((_, slotIndex) => (
-                  <tr key={slotIndex} className="border-b dark:border-gray-800">
-                    <td className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 text-sm dark:text-gray-300">
-                      {currentTimetable[0].slots[slotIndex].time}
-                    </td>
-                    {currentTimetable.map((daySchedule, dayIndex) => {
-                      const slot = daySchedule.slots[slotIndex];
-                      const isBreak = slot?.subject === "Break";
-                      
-                      return (
-                        <td
-                          key={`${daySchedule.day}-${slotIndex}`}
-                          className={`px-4 py-3 ${
-                            isBreak
-                              ? "bg-gray-100 dark:bg-gray-800"
-                              : "bg-blue-50/50 dark:bg-blue-950/20"
-                          }`}
-                        >
-                          {slot ? (
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="dark:text-white truncate">
-                                  {slot.subject}
-                                </p>
-                                {!isBreak && (
-                                  <>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                                      {slot.teacher}
-                                    </p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-500 truncate">
-                                      {slot.room}
-                                    </p>
-                                  </>
-                                )}
-                              </div>
-                              {isEditMode && (
-                                <div className="flex gap-1 flex-shrink-0">
-                                  <Button
-                                    onClick={() => handleSlotEdit(dayIndex, slotIndex)}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 w-7 p-0"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleDeleteSlot(dayIndex, slotIndex)}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </Button>
-                                </div>
-                              )}
+              <tbody className="divide-y dark:divide-gray-800">
+                {Array.from({ length: 6 }, (_, periodIndex) => {
+                  const periodNum = periodIndex + 1;
+                  
+                  return (
+                    <tr key={periodNum} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 border-r dark:border-gray-700">
+                        P{periodNum}
+                      </td>
+                      {days.map((day) => {
+                        const daySchedule = timetableData.find(d => d.day === day);
+                        const period = daySchedule?.periods.find(
+                          p => p.periodNumber === periodNum
+                        );
+                        
+                        if (!period) {
+                          return (
+                            <td
+                              key={day}
+                              className={`px-2 py-3 text-center text-xs text-gray-400 dark:text-gray-600 border-r last:border-r-0 dark:border-gray-800 ${
+                                editMode ? "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950" : ""
+                              }`}
+                              onDoubleClick={() => editMode && handleAddPeriod(day)}
+                              title={editMode ? "Double-click to add period" : ""}
+                            >
+                              -
+                            </td>
+                          );
+                        }
+
+                        const isCurrent = isCurrentPeriod(period) && day === selectedDay;
+                        const periodIndex = daySchedule.periods.findIndex(p => p.periodNumber === periodNum);
+
+                        return (
+                          <td
+                            key={day}
+                            className={`px-2 py-3 text-center text-xs border-r last:border-r-0 dark:border-gray-800 ${
+                              isCurrent
+                                ? "bg-green-100 dark:bg-green-950"
+                                : ""
+                            } ${
+                              editMode ? "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950" : ""
+                            }`}
+                            onDoubleClick={() => editMode && handleEditPeriod(day, periodIndex)}
+                            title={editMode ? "Double-click to edit period" : ""}
+                          >
+                            <div className="font-medium text-gray-900 dark:text-white mb-0.5">
+                              {truncateText(period.subject, 10)}
                             </div>
-                          ) : (
-                            <div className="text-gray-400 dark:text-gray-600 text-sm">-</div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                            <div className="text-gray-500 dark:text-gray-400 text-xs">
+                              {period.room}
+                            </div>
+                            {isCurrent && (
+                              <div className="mt-1">
+                                <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                  Now
+                                </span>
+                              </div>
+                            )}
+                            {editMode && (
+                              <div className="mt-1 opacity-0 hover:opacity-100 transition-opacity">
+                                <span className="text-blue-600 dark:text-blue-400 text-xs">
+                                  ✎
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+                {/* Break Row */}
+                <tr className="bg-yellow-50 dark:bg-yellow-900/20">
+                  <td className="sticky left-0 z-10 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-2 text-sm font-medium text-yellow-700 dark:text-yellow-400 border-r dark:border-yellow-800">
+                    Break
+                  </td>
+                  {days.map((day) => (
+                    <td
+                      key={day}
+                      className="px-2 py-2 text-center text-xs text-yellow-700 dark:text-yellow-400 border-r last:border-r-0 dark:border-yellow-800"
+                    >
+                      <span className="text-lg">☕</span>
+                      <div className="text-xs mt-0.5">11:00-11:15</div>
+                    </td>
+                  ))}
+                </tr>
               </tbody>
             </table>
           </div>
-          
-          {/* Add Slot Section - Only in Edit Mode */}
-          {isEditMode && (
-            <div className="border-t dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Add new time slot to:</p>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                <Button
-                  onClick={() => handleAddSlot(0)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Monday
-                </Button>
-                <Button
-                  onClick={() => handleAddSlot(1)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Tuesday
-                </Button>
-                <Button
-                  onClick={() => handleAddSlot(2)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Wednesday
-                </Button>
-                <Button
-                  onClick={() => handleAddSlot(3)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Thursday
-                </Button>
-                <Button
-                  onClick={() => handleAddSlot(4)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Friday
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-12 shadow-sm border dark:border-gray-800 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
-            Please select both branch and semester to view timetable
-          </p>
         </div>
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Time Slot</DialogTitle>
-            <DialogDescription>
-              Make changes to the time slot details.
-            </DialogDescription>
-          </DialogHeader>
-          {editingSlot && (
-            <div className="space-y-4 py-4">
-              <div>
-                <label className="block text-sm mb-2">Time</label>
-                <Input
-                  value={editingSlot.slot.time}
-                  onChange={(e) =>
-                    setEditingSlot({
-                      ...editingSlot,
-                      slot: { ...editingSlot.slot, time: e.target.value },
-                    })
-                  }
-                  placeholder="e.g., 9:00 - 10:00"
-                />
+      {/* Current Time Info */}
+      <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border dark:border-blue-800">
+        <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+          <Clock className="w-4 h-4" />
+          <p className="text-sm">
+            Current time: <span className="font-medium">{currentTime.toLocaleTimeString()}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Edit/Add Period Modal */}
+      {editingPeriod && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium dark:text-white">
+                  {editingPeriod.index === -1 ? "Add New Period" : "Edit Period"}
+                </h3>
+                <button
+                  onClick={() => setEditingPeriod(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 dark:text-white" />
+                </button>
               </div>
-              <div>
-                <label className="block text-sm mb-2">Subject</label>
-                <Input
-                  value={editingSlot.slot.subject}
-                  onChange={(e) =>
-                    setEditingSlot({
-                      ...editingSlot,
-                      slot: { ...editingSlot.slot, subject: e.target.value },
-                    })
-                  }
-                  placeholder="Subject name"
-                />
+
+              <div className="space-y-4">
+                {/* Period Number */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Period Number
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.periodNumber}
+                    onChange={(e) => setEditForm({ ...editForm, periodNumber: parseInt(e.target.value) })}
+                    className="w-full px-3 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="1"
+                  />
+                </div>
+
+                {/* Subject */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Subject Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.subject}
+                    onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                    className="w-full px-3 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Data Structures"
+                  />
+                </div>
+
+                {/* Time */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={editForm.startTime}
+                      onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
+                      className="w-full px-3 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      value={editForm.endTime}
+                      onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
+                      className="w-full px-3 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Room */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Room/Lab
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.room}
+                    onChange={(e) => setEditForm({ ...editForm, room: e.target.value })}
+                    className="w-full px-3 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., CS-101"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm mb-2">Teacher</label>
-                <Input
-                  value={editingSlot.slot.teacher}
-                  onChange={(e) =>
-                    setEditingSlot({
-                      ...editingSlot,
-                      slot: { ...editingSlot.slot, teacher: e.target.value },
-                    })
-                  }
-                  placeholder="Teacher name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-2">Room</label>
-                <Input
-                  value={editingSlot.slot.room}
-                  onChange={(e) =>
-                    setEditingSlot({
-                      ...editingSlot,
-                      slot: { ...editingSlot.slot, room: e.target.value },
-                    })
-                  }
-                  placeholder="Room number"
-                />
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleSavePeriod}
+                  className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Period
+                </button>
+                <button
+                  onClick={() => setEditingPeriod(null)}
+                  className="flex-1 py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setEditDialogOpen(false);
-                setEditingSlot(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSlotUpdate}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
