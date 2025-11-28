@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   StatusBar,
   Text,
+  ActivityIndicator,
 } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
@@ -18,17 +19,72 @@ import RandomRingModal from './components/RandomRingModal';
 import ViewRecords from './components/ViewRecords';
 import Updates from './components/Updates';
 import { getStyles, colors } from './styles/teacherStyles';
+import apiService from './services/api';
+import socketService from './services/socket';
 
 const Tab = createBottomTabNavigator();
 
 const TeacherDashboard = () => {
+  // UI State
   const [isDark, setIsDark] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [randomRingVisible, setRandomRingVisible] = useState(false);
   const [viewRecordsVisible, setViewRecordsVisible] = useState(false);
   const [updatesVisible, setUpdatesVisible] = useState(false);
-  const [students, setStudents] = useState([
+  
+  // API State
+  const [loading, setLoading] = useState(true);
+  const [students, setStudents] = useState([]);
+  const [currentClass, setCurrentClass] = useState(null);
+  const [hasActiveClass, setHasActiveClass] = useState(false);
+  const [teacherId] = useState('EMP001'); // TODO: Get from login/auth
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch current class and students
+  const fetchCurrentClassStudents = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getCurrentClassStudents(teacherId);
+      
+      if (response.success) {
+        setHasActiveClass(response.hasActiveClass);
+        setCurrentClass(response.currentClass);
+        
+        if (response.students) {
+          // Transform API data to match our format
+          const transformedStudents = response.students.map(student => ({
+            id: student._id,
+            name: student.name,
+            rollNumber: student.enrollmentNo,
+            photo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.name}`,
+            status: student.status || 'absent',
+            attendance: Math.floor(Math.random() * 30) + 70, // TODO: Get real attendance
+            classes: 48, // TODO: Get from API
+            email: student.email,
+            phone: student.phone,
+            semester: student.semester,
+            course: student.course,
+            timerValue: student.timerValue,
+            isRunning: student.isRunning,
+            lastUpdated: student.lastUpdated,
+          }));
+          setStudents(transformedStudents);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      // Fallback to mock data on error
+      loadMockData();
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Mock data fallback
+  const loadMockData = () => {
+    const mockStudents = [
     {
       id: '1',
       name: 'Aarav Sharma',
@@ -137,27 +193,132 @@ const TeacherDashboard = () => {
       attendance: 89,
       classes: 48,
     },
-  ]);
+  ];
+  setStudents(mockStudents);
+  setHasActiveClass(true);
+  setCurrentClass({
+    subject: 'Data Structures',
+    semester: '3',
+    branch: 'CSE',
+    period: 2,
+    room: '101',
+  });
+};
+
+  // Initialize data and socket connection
+  useEffect(() => {
+    fetchCurrentClassStudents();
+
+    // Connect to socket for real-time updates
+    socketService.connect();
+
+    // Listen for student status changes
+    const unsubscribeStatus = socketService.onStudentStatusChange((data) => {
+      console.log('Student status changed:', data);
+      setStudents(prevStudents =>
+        prevStudents.map(student =>
+          student.id === data.studentId
+            ? { ...student, status: data.status, lastUpdated: new Date() }
+            : student
+        )
+      );
+    });
+
+    // Listen for timer updates
+    const unsubscribeTimer = socketService.onTimerUpdated((data) => {
+      console.log('Timer updated:', data);
+      setStudents(prevStudents =>
+        prevStudents.map(student =>
+          student.id === data.studentId
+            ? {
+                ...student,
+                timerValue: data.timerValue,
+                isRunning: data.isRunning,
+                lastUpdated: new Date(),
+              }
+            : student
+        )
+      );
+    });
+
+    // Listen for new student registrations
+    const unsubscribeRegistered = socketService.onStudentRegistered((data) => {
+      console.log('Student registered:', data);
+      fetchCurrentClassStudents(); // Refresh list
+    });
+
+    // Cleanup
+    return () => {
+      unsubscribeStatus();
+      unsubscribeTimer();
+      unsubscribeRegistered();
+      socketService.disconnect();
+    };
+  }, []);
+
+  // Refresh data periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchCurrentClassStudents();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const styles = getStyles(isDark);
   const theme = isDark ? colors.dark : colors.light;
 
-  const handleToggleAttendance = (studentId, newStatus) => {
-    setStudents(prevStudents =>
-      prevStudents.map(student => {
-        if (student.id === studentId) {
-          // Cycle through statuses if no newStatus provided
-          if (!newStatus) {
-            const statuses = ['active', 'present', 'absent', 'left'];
-            const currentIndex = statuses.indexOf(student.status);
-            const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-            return { ...student, status: nextStatus };
+  const handleToggleAttendance = async (studentId, newStatus) => {
+    try {
+      // Optimistic update
+      setStudents(prevStudents =>
+        prevStudents.map(student => {
+          if (student.id === studentId) {
+            // Cycle through statuses if no newStatus provided
+            if (!newStatus) {
+              const statuses = ['active', 'present', 'absent', 'left'];
+              const currentIndex = statuses.indexOf(student.status);
+              const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+              return { ...student, status: nextStatus };
+            }
+            return { ...student, status: newStatus };
           }
-          return { ...student, status: newStatus };
-        }
-        return student;
-      })
-    );
+          return student;
+        })
+      );
+
+      // Update on server
+      const student = students.find(s => s.id === studentId);
+      if (student) {
+        const finalStatus = newStatus || (() => {
+          const statuses = ['active', 'present', 'absent', 'left'];
+          const currentIndex = statuses.indexOf(student.status);
+          return statuses[(currentIndex + 1) % statuses.length];
+        })();
+
+        await apiService.updateStudentStatus(studentId, {
+          status: finalStatus,
+          timerValue: student.timerValue,
+          isRunning: finalStatus === 'active',
+        });
+
+        // Emit socket event for real-time update
+        socketService.emitStudentStatusChange({
+          studentId,
+          status: finalStatus,
+          timestamp: new Date(),
+        });
+      }
+    } catch (error) {
+      console.error('Error updating student status:', error);
+      // Revert on error
+      fetchCurrentClassStudents();
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchCurrentClassStudents();
   };
 
   // Filter by search query
@@ -212,50 +373,101 @@ const TeacherDashboard = () => {
     }
   };
 
-  const HomeScreen = () => (
-    <View style={[localStyles.screenContainer, { backgroundColor: theme.background }]}>
-      <StudentSearch
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        isDark={isDark}
-      />
-      <TeacherStats students={students} isDark={isDark} />
-      
-      {/* Students Attending Header */}
-      <View style={[localStyles.headerContainer, { backgroundColor: theme.background }]}>
-        <View style={localStyles.headerRow}>
-          <Text style={[localStyles.headerTitle, { color: theme.text }]}>
-            Students Attending
-          </Text>
-          <Text style={[localStyles.headerCount, { color: theme.textSecondary }]}>
-            {presentCount} / {students.length} Present
+  const HomeScreen = () => {
+    if (loading) {
+      return (
+        <View style={[localStyles.screenContainer, localStyles.centerContent, { backgroundColor: theme.background }]}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={[localStyles.loadingText, { color: theme.textSecondary }]}>
+            Loading students...
           </Text>
         </View>
+      );
+    }
+
+    if (!hasActiveClass) {
+      return (
+        <View style={[localStyles.screenContainer, localStyles.centerContent, { backgroundColor: theme.background }]}>
+          <Icon name="calendar" size={64} color={theme.textSecondary} />
+          <Text style={[localStyles.emptyTitle, { color: theme.text }]}>
+            No Active Class
+          </Text>
+          <Text style={[localStyles.emptyText, { color: theme.textSecondary }]}>
+            You don't have any class scheduled right now
+          </Text>
+          <TouchableOpacity
+            style={[localStyles.refreshButton, { backgroundColor: theme.primary }]}
+            onPress={handleRefresh}
+          >
+            <Icon name="refresh-cw" size={20} color="#FFFFFF" />
+            <Text style={localStyles.refreshButtonText}>Refresh</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={[localStyles.screenContainer, { backgroundColor: theme.background }]}>
+        {/* Current Class Info */}
+        {currentClass && (
+          <View style={[localStyles.classInfoBanner, { backgroundColor: theme.primary }]}>
+            <View style={localStyles.classInfoContent}>
+              <Text style={localStyles.classSubject}>{currentClass.subject}</Text>
+              <Text style={localStyles.classDetails}>
+                {currentClass.branch} - Semester {currentClass.semester} • Room {currentClass.room}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={handleRefresh}>
+              <Icon name="refresh-cw" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <StudentSearch
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          isDark={isDark}
+        />
+        <TeacherStats students={students} isDark={isDark} />
+        
+        {/* Students Attending Header */}
+        <View style={[localStyles.headerContainer, { backgroundColor: theme.background }]}>
+          <View style={localStyles.headerRow}>
+            <Text style={[localStyles.headerTitle, { color: theme.text }]}>
+              Students Attending
+            </Text>
+            <Text style={[localStyles.headerCount, { color: theme.textSecondary }]}>
+              {presentCount} / {students.length} Present
+            </Text>
+          </View>
+        </View>
+
+        {/* Filter Buttons */}
+        <FilterButtons
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          counts={filterCounts}
+          isDark={isDark}
+        />
+
+        <StudentListView
+          students={filteredStudents}
+          onToggleAttendance={handleToggleAttendance}
+          isDark={isDark}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
+
+        {/* Floating Action Button */}
+        <TouchableOpacity
+          style={[localStyles.fab, { backgroundColor: theme.primary }]}
+          onPress={() => setRandomRingVisible(true)}
+        >
+          <Icon name="bell" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
-
-      {/* Filter Buttons */}
-      <FilterButtons
-        selectedFilter={selectedFilter}
-        onFilterChange={setSelectedFilter}
-        counts={filterCounts}
-        isDark={isDark}
-      />
-
-      <StudentListView
-        students={filteredStudents}
-        onToggleAttendance={handleToggleAttendance}
-        isDark={isDark}
-      />
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={[localStyles.fab, { backgroundColor: theme.primary }]}
-        onPress={() => setRandomRingVisible(true)}
-      >
-        <Icon name="bell" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   const CalendarScreen = () => (
     <View style={[localStyles.screenContainer, { backgroundColor: theme.background }]}>
@@ -329,6 +541,8 @@ const TeacherDashboard = () => {
         onClose={() => setRandomRingVisible(false)}
         students={students}
         isDark={isDark}
+        teacherId={teacherId}
+        currentClass={currentClass}
       />
 
       <ViewRecords
@@ -357,9 +571,58 @@ const localStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   comingSoonText: {
     marginTop: 16,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  refreshButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  classInfoBanner: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  classInfoContent: {
+    flex: 1,
+  },
+  classSubject: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  classDetails: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 14,
   },
   headerContainer: {
     paddingHorizontal: 16,

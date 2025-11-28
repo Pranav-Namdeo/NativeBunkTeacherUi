@@ -7,32 +7,65 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { getStyles, colors } from '../styles/teacherStyles';
+import apiService from '../services/api';
 
-const RandomRingModal = ({ visible, onClose, students, isDark }) => {
+const RandomRingModal = ({ visible, onClose, students, isDark, teacherId, currentClass }) => {
   const [selectedOption, setSelectedOption] = useState('all');
   const [numberOfStudents, setNumberOfStudents] = useState('');
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   const styles = getStyles(isDark);
   const theme = isDark ? colors.dark : colors.light;
 
-  const handleRing = () => {
-    let selected = [];
-    
-    if (selectedOption === 'all') {
-      selected = [...students];
-    } else {
-      const num = parseInt(numberOfStudents) || 0;
-      const shuffled = [...students].sort(() => Math.random() - 0.5);
-      selected = shuffled.slice(0, Math.min(num, students.length));
+  const handleRing = async () => {
+    try {
+      setLoading(true);
+      
+      let selected = [];
+      
+      if (selectedOption === 'all') {
+        selected = [...students];
+      } else {
+        const num = parseInt(numberOfStudents) || 0;
+        if (num <= 0 || num > students.length) {
+          Alert.alert('Invalid Number', `Please enter a number between 1 and ${students.length}`);
+          setLoading(false);
+          return;
+        }
+        const shuffled = [...students].sort(() => Math.random() - 0.5);
+        selected = shuffled.slice(0, Math.min(num, students.length));
+      }
+      
+      // Call API to trigger random ring
+      if (teacherId && currentClass) {
+        const randomRingData = {
+          teacherId,
+          classId: currentClass._id || 'temp',
+          type: selectedOption === 'all' ? 'all' : 'select',
+          count: selectedOption === 'all' ? students.length : selected.length,
+          semester: currentClass.semester,
+          branch: currentClass.branch,
+          studentIds: selected.map(s => s.id),
+        };
+
+        await apiService.triggerRandomRing(randomRingData);
+      }
+      
+      setSelectedStudents(selected);
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error triggering random ring:', error);
+      Alert.alert('Error', 'Failed to trigger random ring. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setSelectedStudents(selected);
-    setShowResults(true);
   };
 
   const handleClose = () => {
@@ -164,11 +197,20 @@ const RandomRingModal = ({ visible, onClose, students, isDark }) => {
                 )}
 
                 <TouchableOpacity
-                  style={[localStyles.ringButton, { backgroundColor: theme.primary }]}
+                  style={[localStyles.ringButton, { 
+                    backgroundColor: loading ? theme.gray200 : theme.primary 
+                  }]}
                   onPress={handleRing}
+                  disabled={loading}
                 >
-                  <Icon name="bell" size={20} color="#FFFFFF" />
-                  <Text style={localStyles.ringButtonText}>Ring Students</Text>
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Icon name="bell" size={20} color="#FFFFFF" />
+                      <Text style={localStyles.ringButtonText}>Ring Students</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </>
             ) : (
