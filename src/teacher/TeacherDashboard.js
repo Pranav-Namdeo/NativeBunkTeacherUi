@@ -18,6 +18,8 @@ import FilterButtons from './components/FilterButtons';
 import RandomRingModal from './components/RandomRingModal';
 import ViewRecords from './components/ViewRecords';
 import Updates from './components/Updates';
+import HelpAndSupport from './components/HelpAndSupport';
+import Feedback from './components/Feedback';
 import { getStyles, colors } from './styles/teacherStyles';
 import apiService from './services/api';
 import socketService from './services/socket';
@@ -32,6 +34,8 @@ const TeacherDashboard = () => {
   const [randomRingVisible, setRandomRingVisible] = useState(false);
   const [viewRecordsVisible, setViewRecordsVisible] = useState(false);
   const [updatesVisible, setUpdatesVisible] = useState(false);
+  const [helpVisible, setHelpVisible] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
   
   // API State
   const [loading, setLoading] = useState(true);
@@ -361,12 +365,10 @@ const TeacherDashboard = () => {
         setUpdatesVisible(true);
         break;
       case 'help':
-        // TODO: Add help screen
-        console.log('Help clicked');
+        setHelpVisible(true);
         break;
       case 'feedback':
-        // TODO: Add feedback screen
-        console.log('Feedback clicked');
+        setFeedbackVisible(true);
         break;
       default:
         break;
@@ -554,6 +556,18 @@ const TeacherDashboard = () => {
       <Updates
         visible={updatesVisible}
         onClose={() => setUpdatesVisible(false)}
+        isDark={isDark}
+      />
+
+      <HelpAndSupport
+        visible={helpVisible}
+        onClose={() => setHelpVisible(false)}
+        isDark={isDark}
+      />
+
+      <Feedback
+        visible={feedbackVisible}
+        onClose={() => setFeedbackVisible(false)}
         isDark={isDark}
       />
     </SafeAreaView>
