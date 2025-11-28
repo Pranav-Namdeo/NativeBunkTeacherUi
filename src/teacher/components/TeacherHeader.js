@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { getStyles, colors } from '../styles/teacherStyles';
+import TeacherProfileDialog from './TeacherProfileDialog';
 
 const TeacherHeader = ({ isDark, onToggleTheme, onMenuItemPress }) => {
   const [menuVisible, setMenuVisible] = useState(false);
@@ -110,75 +111,18 @@ const TeacherHeader = ({ isDark, onToggleTheme, onMenuItemPress }) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Profile Modal */}
-      <Modal
+      {/* Teacher Profile Dialog */}
+      <TeacherProfileDialog
         visible={profileVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setProfileVisible(false)}
-      >
-        <View style={localStyles.modalOverlay}>
-          <View style={[localStyles.profileModal, { backgroundColor: theme.surface }]}>
-            <View style={localStyles.profileHeader}>
-              <Text style={[localStyles.profileTitle, { color: theme.text }]}>
-                Teacher Profile
-              </Text>
-              <TouchableOpacity onPress={() => setProfileVisible(false)}>
-                <Icon name="x" size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={localStyles.profileContent}>
-              <View style={localStyles.profileImageContainer}>
-                <Image
-                  source={{ uri: teacherInfo.photo }}
-                  style={localStyles.profileImageLarge}
-                />
-              </View>
-
-              <View style={localStyles.profileInfo}>
-                <Text style={[localStyles.teacherName, { color: theme.text }]}>
-                  {teacherInfo.name}
-                </Text>
-                <Text style={[localStyles.teacherDept, { color: theme.textSecondary }]}>
-                  {teacherInfo.department}
-                </Text>
-              </View>
-
-              <View style={[localStyles.infoSection, { borderTopColor: theme.border }]}>
-                <View style={localStyles.infoRow}>
-                  <Icon name="mail" size={18} color={theme.textSecondary} />
-                  <Text style={[localStyles.infoText, { color: theme.text }]}>
-                    {teacherInfo.email}
-                  </Text>
-                </View>
-                <View style={localStyles.infoRow}>
-                  <Icon name="credit-card" size={18} color={theme.textSecondary} />
-                  <Text style={[localStyles.infoText, { color: theme.text }]}>
-                    {teacherInfo.employeeId}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={localStyles.subjectsSection}>
-                <Text style={[localStyles.sectionTitle, { color: theme.text }]}>
-                  Subjects Teaching
-                </Text>
-                {teacherInfo.subjects.map((subject, index) => (
-                  <View
-                    key={index}
-                    style={[localStyles.subjectChip, { backgroundColor: theme.gray100 }]}
-                  >
-                    <Text style={[localStyles.subjectText, { color: theme.text }]}>
-                      {subject}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setProfileVisible(false)}
+        isDark={isDark}
+        teacherData={{
+          name: teacherInfo.name,
+          teacherId: teacherInfo.employeeId,
+          email: teacherInfo.email,
+          profileImage: teacherInfo.photo,
+        }}
+      />
     </View>
   );
 };
