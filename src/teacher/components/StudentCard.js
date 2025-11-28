@@ -17,27 +17,43 @@ const StudentCard = ({ student, onToggleAttendance, isDark }) => {
   const theme = isDark ? colors.dark : colors.light;
 
   const getStatusStyle = (status) => {
+    if (status === 'active') return styles.badgeActive;
     if (status === 'present') return styles.badgePresent;
     if (status === 'absent') return styles.badgeAbsent;
-    return styles.badgeLate;
+    if (status === 'left') return styles.badgeLeft;
+    return styles.badgeActive;
   };
 
   const getStatusTextStyle = (status) => {
+    if (status === 'active') return styles.badgeTextActive;
     if (status === 'present') return styles.badgeTextPresent;
     if (status === 'absent') return styles.badgeTextAbsent;
-    return styles.badgeTextLate;
+    if (status === 'left') return styles.badgeTextLeft;
+    return styles.badgeTextActive;
   };
 
   const getStatusIcon = (status) => {
+    if (status === 'active') return 'activity';
     if (status === 'present') return 'check-circle';
     if (status === 'absent') return 'x-circle';
-    return 'clock';
+    if (status === 'left') return 'log-out';
+    return 'activity';
   };
 
   const getStatusColor = (status) => {
-    if (status === 'present') return isDark ? '#34D399' : '#059669';
-    if (status === 'absent') return isDark ? '#F87171' : '#DC2626';
-    return isDark ? '#FBBF24' : '#D97706';
+    if (status === 'active') return isDark ? '#34D399' : '#10B981';
+    if (status === 'present') return isDark ? '#60A5FA' : '#3B82F6';
+    if (status === 'absent') return isDark ? '#F87171' : '#EF4444';
+    if (status === 'left') return isDark ? '#FBBF24' : '#F59E0B';
+    return isDark ? '#34D399' : '#10B981';
+  };
+
+  const getStatusLabel = (status) => {
+    if (status === 'active') return 'Active';
+    if (status === 'present') return 'Present';
+    if (status === 'absent') return 'Absent';
+    if (status === 'left') return 'Left Early';
+    return 'Active';
   };
 
   return (
@@ -60,7 +76,7 @@ const StudentCard = ({ student, onToggleAttendance, isDark }) => {
 
         <View style={[localStyles.statusBadge, getStatusStyle(student.status)]}>
           <Text style={[localStyles.statusText, getStatusTextStyle(student.status)]}>
-            {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+            {getStatusLabel(student.status)}
           </Text>
         </View>
 
@@ -139,7 +155,7 @@ const StudentCard = ({ student, onToggleAttendance, isDark }) => {
                     color={getStatusColor(student.status)}
                   />
                   <Text style={[localStyles.statusLabel, getStatusTextStyle(student.status)]}>
-                    {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+                    {getStatusLabel(student.status)}
                   </Text>
                 </View>
               </View>
@@ -150,13 +166,30 @@ const StudentCard = ({ student, onToggleAttendance, isDark }) => {
                     backgroundColor: isDark ? 'rgba(52, 211, 153, 0.2)' : '#D1FAE5',
                   }]}
                   onPress={() => {
+                    onToggleAttendance(student.id, 'active');
+                    setModalVisible(false);
+                  }}
+                >
+                  <Icon name="activity" size={20} color={isDark ? '#34D399' : '#10B981'} />
+                  <Text style={[localStyles.actionButtonText, { 
+                    color: isDark ? '#34D399' : '#10B981',
+                  }]}>
+                    Mark Active
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[localStyles.actionButton, { 
+                    backgroundColor: isDark ? 'rgba(96, 165, 250, 0.2)' : '#DBEAFE',
+                  }]}
+                  onPress={() => {
                     onToggleAttendance(student.id, 'present');
                     setModalVisible(false);
                   }}
                 >
-                  <Icon name="check-circle" size={20} color={isDark ? '#34D399' : '#059669'} />
+                  <Icon name="check-circle" size={20} color={isDark ? '#60A5FA' : '#3B82F6'} />
                   <Text style={[localStyles.actionButtonText, { 
-                    color: isDark ? '#34D399' : '#059669',
+                    color: isDark ? '#60A5FA' : '#3B82F6',
                   }]}>
                     Mark Present
                   </Text>
@@ -171,9 +204,9 @@ const StudentCard = ({ student, onToggleAttendance, isDark }) => {
                     setModalVisible(false);
                   }}
                 >
-                  <Icon name="x-circle" size={20} color={isDark ? '#F87171' : '#DC2626'} />
+                  <Icon name="x-circle" size={20} color={isDark ? '#F87171' : '#EF4444'} />
                   <Text style={[localStyles.actionButtonText, { 
-                    color: isDark ? '#F87171' : '#DC2626',
+                    color: isDark ? '#F87171' : '#EF4444',
                   }]}>
                     Mark Absent
                   </Text>
@@ -184,15 +217,15 @@ const StudentCard = ({ student, onToggleAttendance, isDark }) => {
                     backgroundColor: isDark ? 'rgba(251, 191, 36, 0.2)' : '#FEF3C7',
                   }]}
                   onPress={() => {
-                    onToggleAttendance(student.id, 'late');
+                    onToggleAttendance(student.id, 'left');
                     setModalVisible(false);
                   }}
                 >
-                  <Icon name="clock" size={20} color={isDark ? '#FBBF24' : '#D97706'} />
+                  <Icon name="log-out" size={20} color={isDark ? '#FBBF24' : '#F59E0B'} />
                   <Text style={[localStyles.actionButtonText, { 
-                    color: isDark ? '#FBBF24' : '#D97706',
+                    color: isDark ? '#FBBF24' : '#F59E0B',
                   }]}>
-                    Mark Late
+                    Mark Left Early
                   </Text>
                 </TouchableOpacity>
               </View>

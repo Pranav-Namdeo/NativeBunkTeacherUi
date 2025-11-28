@@ -150,27 +150,35 @@ export const getStyles = (isDark) => {
       borderRadius: 12,
       alignSelf: 'flex-start',
     },
+    badgeActive: {
+      backgroundColor: isDark ? 'rgba(52, 211, 153, 0.2)' : '#D1FAE5',
+    },
     badgePresent: {
-      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#D1FAE5',
+      backgroundColor: isDark ? 'rgba(96, 165, 250, 0.2)' : '#DBEAFE',
     },
     badgeAbsent: {
-      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2',
+      backgroundColor: isDark ? 'rgba(248, 113, 113, 0.2)' : '#FEE2E2',
     },
-    badgeLate: {
-      backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7',
+    badgeLeft: {
+      backgroundColor: isDark ? 'rgba(251, 191, 36, 0.2)' : '#FEF3C7',
+    },
+    badgeTextActive: {
+      color: isDark ? '#34D399' : '#10B981',
+      fontSize: 12,
+      fontWeight: '600',
     },
     badgeTextPresent: {
-      color: isDark ? '#34D399' : '#059669',
+      color: isDark ? '#60A5FA' : '#3B82F6',
       fontSize: 12,
       fontWeight: '600',
     },
     badgeTextAbsent: {
-      color: isDark ? '#F87171' : '#DC2626',
+      color: isDark ? '#F87171' : '#EF4444',
       fontSize: 12,
       fontWeight: '600',
     },
-    badgeTextLate: {
-      color: isDark ? '#FBBF24' : '#D97706',
+    badgeTextLeft: {
+      color: isDark ? '#FBBF24' : '#F59E0B',
       fontSize: 12,
       fontWeight: '600',
     },

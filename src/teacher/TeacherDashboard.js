@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Text,
 } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
@@ -12,6 +13,7 @@ import TeacherHeader from './components/TeacherHeader';
 import StudentSearch from './components/StudentSearch';
 import StudentListView from './components/StudentListView';
 import TeacherStats from './components/TeacherStats';
+import FilterButtons from './components/FilterButtons';
 import RandomRingModal from './components/RandomRingModal';
 import { getStyles, colors } from './styles/teacherStyles';
 
@@ -20,6 +22,7 @@ const Tab = createBottomTabNavigator();
 const TeacherDashboard = () => {
   const [isDark, setIsDark] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
   const [randomRingVisible, setRandomRingVisible] = useState(false);
   const [students, setStudents] = useState([
     {
@@ -63,7 +66,7 @@ const TeacherDashboard = () => {
       name: 'Vihaan Kumar',
       rollNumber: 'CS005',
       photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vihaan',
-      status: 'late',
+      status: 'active',
       attendance: 85,
       classes: 48,
     },
@@ -108,7 +111,7 @@ const TeacherDashboard = () => {
       name: 'Myra Kapoor',
       rollNumber: 'CS010',
       photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Myra',
-      status: 'late',
+      status: 'left',
       attendance: 82,
       classes: 48,
     },
@@ -141,7 +144,7 @@ const TeacherDashboard = () => {
         if (student.id === studentId) {
           // Cycle through statuses if no newStatus provided
           if (!newStatus) {
-            const statuses = ['present', 'absent', 'late'];
+            const statuses = ['active', 'present', 'absent', 'left'];
             const currentIndex = statuses.indexOf(student.status);
             const nextStatus = statuses[(currentIndex + 1) % statuses.length];
             return { ...student, status: nextStatus };
@@ -153,11 +156,32 @@ const TeacherDashboard = () => {
     );
   };
 
-  const filteredStudents = students.filter(
+  // Filter by search query
+  let filteredStudents = students.filter(
     student =>
       student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Filter by status
+  if (selectedFilter !== 'all') {
+    filteredStudents = filteredStudents.filter(
+      student => student.status === selectedFilter
+    );
+  }
+
+  // Calculate counts for each filter
+  const filterCounts = {
+    all: students.length,
+    active: students.filter(s => s.status === 'active').length,
+    present: students.filter(s => s.status === 'present').length,
+    absent: students.filter(s => s.status === 'absent').length,
+    left: students.filter(s => s.status === 'left').length,
+  };
+
+  const presentCount = students.filter(
+    s => s.status === 'active' || s.status === 'present'
+  ).length;
 
   const HomeScreen = () => (
     <View style={[localStyles.screenContainer, { backgroundColor: theme.background }]}>
@@ -167,6 +191,27 @@ const TeacherDashboard = () => {
         isDark={isDark}
       />
       <TeacherStats students={students} isDark={isDark} />
+      
+      {/* Students Attending Header */}
+      <View style={[localStyles.headerContainer, { backgroundColor: theme.background }]}>
+        <View style={localStyles.headerRow}>
+          <Text style={[localStyles.headerTitle, { color: theme.text }]}>
+            Students Attending
+          </Text>
+          <Text style={[localStyles.headerCount, { color: theme.textSecondary }]}>
+            {presentCount} / {students.length} Present
+          </Text>
+        </View>
+      </View>
+
+      {/* Filter Buttons */}
+      <FilterButtons
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        counts={filterCounts}
+        isDark={isDark}
+      />
+
       <StudentListView
         students={filteredStudents}
         onToggleAttendance={handleToggleAttendance}
@@ -270,6 +315,22 @@ const localStyles = StyleSheet.create({
   },
   comingSoonText: {
     marginTop: 16,
+  },
+  headerContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  headerCount: {
+    fontSize: 14,
   },
   fab: {
     position: 'absolute',
