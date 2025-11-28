@@ -15,6 +15,8 @@ import StudentListView from './components/StudentListView';
 import TeacherStats from './components/TeacherStats';
 import FilterButtons from './components/FilterButtons';
 import RandomRingModal from './components/RandomRingModal';
+import ViewRecords from './components/ViewRecords';
+import Updates from './components/Updates';
 import { getStyles, colors } from './styles/teacherStyles';
 
 const Tab = createBottomTabNavigator();
@@ -24,6 +26,8 @@ const TeacherDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [randomRingVisible, setRandomRingVisible] = useState(false);
+  const [viewRecordsVisible, setViewRecordsVisible] = useState(false);
+  const [updatesVisible, setUpdatesVisible] = useState(false);
   const [students, setStudents] = useState([
     {
       id: '1',
@@ -183,6 +187,31 @@ const TeacherDashboard = () => {
     s => s.status === 'active' || s.status === 'present'
   ).length;
 
+  const handleMenuItemPress = (action) => {
+    switch (action) {
+      case 'viewRecords':
+        setViewRecordsVisible(true);
+        break;
+      case 'notification':
+        // TODO: Add notification screen
+        console.log('Notification clicked');
+        break;
+      case 'updates':
+        setUpdatesVisible(true);
+        break;
+      case 'help':
+        // TODO: Add help screen
+        console.log('Help clicked');
+        break;
+      case 'feedback':
+        // TODO: Add feedback screen
+        console.log('Feedback clicked');
+        break;
+      default:
+        break;
+    }
+  };
+
   const HomeScreen = () => (
     <View style={[localStyles.screenContainer, { backgroundColor: theme.background }]}>
       <StudentSearch
@@ -256,7 +285,11 @@ const TeacherDashboard = () => {
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor={theme.surface}
       />
-      <TeacherHeader isDark={isDark} onToggleTheme={() => setIsDark(!isDark)} />
+      <TeacherHeader 
+        isDark={isDark} 
+        onToggleTheme={() => setIsDark(!isDark)}
+        onMenuItemPress={handleMenuItemPress}
+      />
       
       <Tab.Navigator
         screenOptions={({ route }) => ({
@@ -295,6 +328,18 @@ const TeacherDashboard = () => {
         visible={randomRingVisible}
         onClose={() => setRandomRingVisible(false)}
         students={students}
+        isDark={isDark}
+      />
+
+      <ViewRecords
+        visible={viewRecordsVisible}
+        onClose={() => setViewRecordsVisible(false)}
+        isDark={isDark}
+      />
+
+      <Updates
+        visible={updatesVisible}
+        onClose={() => setUpdatesVisible(false)}
         isDark={isDark}
       />
     </SafeAreaView>

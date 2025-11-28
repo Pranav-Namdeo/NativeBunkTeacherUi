@@ -11,19 +11,26 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { getStyles, colors } from '../styles/teacherStyles';
 
-const TeacherHeader = ({ isDark, onToggleTheme }) => {
+const TeacherHeader = ({ isDark, onToggleTheme, onMenuItemPress }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
   const styles = getStyles(isDark);
   const theme = isDark ? colors.dark : colors.light;
 
   const menuItems = [
-    { id: 1, label: 'View Records', icon: 'file-text' },
-    { id: 2, label: 'Notification', icon: 'bell' },
-    { id: 3, label: 'Updates', icon: 'refresh-cw' },
-    { id: 4, label: 'Help and Support', icon: 'help-circle' },
-    { id: 5, label: 'FAQs', icon: 'message-circle' },
+    { id: 1, label: 'View Records', icon: 'file-text', action: 'viewRecords' },
+    { id: 2, label: 'Notification', icon: 'bell', action: 'notification' },
+    { id: 3, label: 'Updates', icon: 'refresh-cw', action: 'updates' },
+    { id: 4, label: 'Help and Support', icon: 'help-circle', action: 'help' },
+    { id: 5, label: 'Feedback', icon: 'message-circle', action: 'feedback' },
   ];
+
+  const handleMenuItemPress = (action) => {
+    setMenuVisible(false);
+    if (onMenuItemPress) {
+      onMenuItemPress(action);
+    }
+  };
 
   const teacherInfo = {
     name: 'Dr. Priya Sharma',
@@ -91,7 +98,7 @@ const TeacherHeader = ({ isDark, onToggleTheme }) => {
                     borderBottomColor: theme.border,
                   },
                 ]}
-                onPress={() => setMenuVisible(false)}
+                onPress={() => handleMenuItemPress(item.action)}
               >
                 <Icon name={item.icon} size={20} color={theme.text} />
                 <Text style={[localStyles.menuText, { color: theme.text }]}>
