@@ -8,8 +8,11 @@ import {
   Text,
   ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
+import LoginScreen from './screens/LoginScreen';
+import CalendarScreen from './screens/CalendarScreen';
 import TeacherHeader from './components/TeacherHeader';
 import StudentSearch from './components/StudentSearch';
 import StudentListView from './components/StudentListView';
@@ -27,6 +30,11 @@ import socketService from './services/socket';
 const Tab = createBottomTabNavigator();
 
 const TeacherDashboard = () => {
+  // Auth State
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [teacher, setTeacher] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  
   // UI State
   const [isDark, setIsDark] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,13 +50,63 @@ const TeacherDashboard = () => {
   const [students, setStudents] = useState([]);
   const [currentClass, setCurrentClass] = useState(null);
   const [hasActiveClass, setHasActiveClass] = useState(false);
-  const [teacherId] = useState('EMP001'); // TODO: Get from login/auth
   const [refreshing, setRefreshing] = useState(false);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
+    try {
+      const savedTeacher = await AsyncStorage.getItem('teacher');
+      if (savedTeacher) {
+        const teacherData = JSON.parse(savedTeacher);
+        setTeacher(teacherData);
+        setIsLoggedIn(true);
+        console.log('✅ Restored session:', teacherData.name);
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+    } finally {
+      setCheckingAuth(false);
+    }
+  };
+
+  // Handle successful login
+  const handleLoginSuccess = async (teacherData) => {
+    try {
+      // Save teacher data to AsyncStorage
+      await AsyncStorage.setItem('teacher', JSON.stringify(teacherData));
+      setTeacher(teacherData);
+      setIsLoggedIn(true);
+      console.log('✅ Login successful, teacher data saved:', teacherData.name);
+    } catch (error) {
+      console.error('Error saving teacher data:', error);
+    }
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('teacher');
+      setTeacher(null);
+      setIsLoggedIn(false);
+      setStudents([]);
+      setCurrentClass(null);
+      console.log('✅ Logged out successfully');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   // Fetch current class and students
   const fetchCurrentClassStudents = async () => {
+    if (!teacher) return;
+    
     try {
       setLoading(true);
+      const teacherId = teacher.employeeId || teacher._id;
       const response = await apiService.getCurrentClassStudents(teacherId);
       
       if (response.success) {
@@ -471,17 +529,6 @@ const TeacherDashboard = () => {
     );
   };
 
-  const CalendarScreen = () => (
-    <View style={[localStyles.screenContainer, { backgroundColor: theme.background }]}>
-      <View style={localStyles.centerContent}>
-        <Icon name="calendar" size={64} color={theme.textSecondary} />
-        <View style={localStyles.comingSoonText}>
-          <Icon name="clock" size={20} color={theme.textSecondary} />
-        </View>
-      </View>
-    </View>
-  );
-
   const TimetableScreen = () => (
     <View style={[localStyles.screenContainer, { backgroundColor: theme.background }]}>
       <View style={localStyles.centerContent}>
@@ -493,6 +540,23 @@ const TeacherDashboard = () => {
     </View>
   );
 
+  // Show loading while checking auth
+  if (checkingAuth) {
+    return (
+      <View style={[localStyles.container, localStyles.centerContent, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[localStyles.loadingText, { color: theme.textSecondary }]}>
+          Checking authentication...
+        </Text>
+      </View>
+    );
+  }
+
+  // Show login screen if not logged in
+  if (!isLoggedIn) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} isDark={isDark} />;
+  }
+
   return (
     <SafeAreaView style={[localStyles.container, { backgroundColor: theme.background }]}>
       <StatusBar
@@ -503,6 +567,8 @@ const TeacherDashboard = () => {
         isDark={isDark} 
         onToggleTheme={() => setIsDark(!isDark)}
         onMenuItemPress={handleMenuItemPress}
+        onLogout={handleLogout}
+        teacherData={teacher}
       />
       
       <Tab.Navigator
@@ -534,7 +600,9 @@ const TeacherDashboard = () => {
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Calendar" component={CalendarScreen} />
+        <Tab.Screen name="Calendar">
+          {() => <CalendarScreen isDark={isDark} />}
+        </Tab.Screen>
         <Tab.Screen name="Timetable" component={TimetableScreen} />
       </Tab.Navigator>
 
@@ -543,7 +611,7 @@ const TeacherDashboard = () => {
         onClose={() => setRandomRingVisible(false)}
         students={students}
         isDark={isDark}
-        teacherId={teacherId}
+        teacherId={teacher?.employeeId || teacher?._id}
         currentClass={currentClass}
       />
 

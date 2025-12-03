@@ -32,6 +32,16 @@ class ApiService {
     }
   }
 
+  // ==================== Authentication ====================
+
+  // Login (for both teachers and students)
+  async login(id, password) {
+    return this.fetch('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ id, password }),
+    });
+  }
+
   // ==================== Teacher Endpoints ====================
 
   // Get all teachers
@@ -197,6 +207,41 @@ class ApiService {
   // Health check
   async healthCheck() {
     return this.fetch('/api/health');
+  }
+
+  // ==================== Holidays ====================
+
+  // Get all holidays
+  async getAllHolidays() {
+    return this.fetch('/api/holidays');
+  }
+
+  // Get holidays in date range
+  async getHolidaysInRange(startDate, endDate) {
+    return this.fetch(`/api/holidays/range?startDate=${startDate}&endDate=${endDate}`);
+  }
+
+  // Create holiday
+  async createHoliday(holidayData) {
+    return this.fetch('/api/holidays', {
+      method: 'POST',
+      body: JSON.stringify(holidayData),
+    });
+  }
+
+  // Update holiday
+  async updateHoliday(holidayId, holidayData) {
+    return this.fetch(`/api/holidays/${holidayId}`, {
+      method: 'PUT',
+      body: JSON.stringify(holidayData),
+    });
+  }
+
+  // Delete holiday
+  async deleteHoliday(holidayId) {
+    return this.fetch(`/api/holidays/${holidayId}`, {
+      method: 'DELETE',
+    });
   }
 }
 

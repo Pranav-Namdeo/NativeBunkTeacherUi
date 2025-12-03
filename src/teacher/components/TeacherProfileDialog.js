@@ -7,11 +7,12 @@ import {
   StyleSheet,
   Image,
   ScrollView,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors } from '../styles/teacherStyles';
 
-const TeacherProfileDialog = ({ visible, onClose, isDark, teacherData }) => {
+const TeacherProfileDialog = ({ visible, onClose, isDark, teacherData, onLogout }) => {
   const theme = isDark ? colors.dark : colors.light;
 
   // Default teacher data if not provided
@@ -25,13 +26,35 @@ const TeacherProfileDialog = ({ visible, onClose, isDark, teacherData }) => {
   const handleChangePassword = () => {
     console.log('Change password clicked');
     // TODO: Add change password functionality
-    onClose();
+    Alert.alert(
+      'Change Password',
+      'This feature will be available soon.',
+      [{ text: 'OK' }]
+    );
   };
 
   const handleLogout = () => {
-    console.log('Logout clicked');
-    // TODO: Add logout functionality
-    onClose();
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => {
+            console.log('✅ User confirmed logout');
+            onClose();
+            if (onLogout) {
+              onLogout();
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (

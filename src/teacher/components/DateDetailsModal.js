@@ -10,94 +10,54 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors } from '../styles/teacherStyles';
 
-const DateDetailsModal = ({
-  visible,
-  onClose,
-  date,
-  holiday,
-  attendance,
-  isDark,
-}) => {
+const DateDetailsModal = ({ visible, onClose, date, holiday, attendance, isDark }) => {
   const theme = isDark ? colors.dark : colors.light;
 
   const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const dayNames = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-  ];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  if (!date) return null;
-
-  const formattedDate = `${dayNames[date.getDay()]}, ${
-    monthNames[date.getMonth()]
-  } ${date.getDate()}, ${date.getFullYear()}`;
-
-  const getHolidayTypeIcon = (type) => {
-    switch (type) {
-      case 'national':
-        return '🏖️';
-      case 'religious':
-        return '🎉';
-      case 'exam':
-        return '📝';
-      case 'academic':
-        return '🎓';
-      default:
-        return '📅';
-    }
-  };
+  const formattedDate = `${dayNames[date.getDay()]}, ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 
   const getHolidayTypeColor = (type) => {
     switch (type) {
-      case 'national':
-        return {
-          bg: isDark ? 'rgba(251, 146, 60, 0.2)' : '#FED7AA',
-          text: isDark ? '#FB923C' : '#EA580C',
-          border: isDark ? '#C2410C' : '#FDBA74',
-        };
-      case 'religious':
-        return {
-          bg: isDark ? 'rgba(248, 113, 113, 0.2)' : '#FECACA',
-          text: isDark ? '#F87171' : '#DC2626',
-          border: isDark ? '#991B1B' : '#FCA5A5',
-        };
+      case 'holiday':
+        return isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2';
       case 'exam':
-        return {
-          bg: isDark ? 'rgba(167, 139, 250, 0.2)' : '#E9D5FF',
-          text: isDark ? '#A78BFA' : '#9333EA',
-          border: isDark ? '#6B21A8' : '#D8B4FE',
-        };
-      case 'academic':
-        return {
-          bg: isDark ? 'rgba(96, 165, 250, 0.2)' : '#DBEAFE',
-          text: isDark ? '#60A5FA' : '#2563EB',
-          border: isDark ? '#1E40AF' : '#93C5FD',
-        };
+        return isDark ? 'rgba(168, 85, 247, 0.2)' : '#F3E8FF';
+      case 'event':
+        return isDark ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE';
       default:
-        return {
-          bg: theme.gray100,
-          text: theme.text,
-          border: theme.border,
-        };
+        return isDark ? 'rgba(107, 114, 128, 0.2)' : '#F3F4F6';
+    }
+  };
+
+  const getHolidayTypeBorderColor = (type) => {
+    switch (type) {
+      case 'holiday':
+        return isDark ? '#EF4444' : '#FCA5A5';
+      case 'exam':
+        return isDark ? '#A855F7' : '#C084FC';
+      case 'event':
+        return isDark ? '#3B82F6' : '#93C5FD';
+      default:
+        return isDark ? '#6B7280' : '#D1D5DB';
+    }
+  };
+
+  const getHolidayTypeIcon = (type) => {
+    switch (type) {
+      case 'holiday':
+        return '🏖️';
+      case 'exam':
+        return '📝';
+      case 'event':
+        return '🎓';
+      default:
+        return '📅';
     }
   };
 
@@ -106,37 +66,35 @@ const DateDetailsModal = ({
       case 'present':
         return {
           icon: 'check-circle',
-          color: isDark ? '#34D399' : '#10B981',
-          bg: isDark ? 'rgba(52, 211, 153, 0.2)' : '#D1FAE5',
+          color: '#10B981',
+          bgColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#D1FAE5',
           label: 'Present',
         };
       case 'absent':
         return {
           icon: 'x-circle',
-          color: isDark ? '#F87171' : '#EF4444',
-          bg: isDark ? 'rgba(248, 113, 113, 0.2)' : '#FEE2E2',
+          color: '#EF4444',
+          bgColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2',
           label: 'Absent',
         };
       case 'leave':
         return {
           icon: 'alert-circle',
-          color: isDark ? '#FBBF24' : '#F59E0B',
-          bg: isDark ? 'rgba(251, 191, 36, 0.2)' : '#FEF3C7',
+          color: '#F59E0B',
+          bgColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7',
           label: 'On Leave',
         };
       default:
         return {
           icon: 'calendar',
-          color: theme.textSecondary,
-          bg: theme.gray100,
+          color: '#6B7280',
+          bgColor: isDark ? 'rgba(107, 114, 128, 0.2)' : '#F3F4F6',
           label: 'No Record',
         };
     }
   };
 
-  const statusInfo = attendance
-    ? getStatusInfo(attendance.status)
-    : getStatusInfo(null);
+  const statusInfo = attendance ? getStatusInfo(attendance.status) : getStatusInfo(null);
 
   return (
     <Modal
@@ -153,99 +111,92 @@ const DateDetailsModal = ({
               <Text style={[styles.dateNumber, { color: theme.text }]}>
                 {date.getDate()}
               </Text>
-              <Text
-                style={[styles.dateString, { color: theme.textSecondary }]}
-              >
+              <Text style={[styles.dateString, { color: theme.textSecondary }]}>
                 {formattedDate}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="x" size={20} color={theme.textSecondary} />
+            <TouchableOpacity
+              onPress={onClose}
+              style={[styles.closeButton, { backgroundColor: theme.background }]}
+            >
+              <Icon name="x" size={20} color={theme.text} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            style={styles.content}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
+          <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
             {/* Holiday Information */}
             {holiday && (
               <View
                 style={[
                   styles.holidayCard,
                   {
-                    backgroundColor: getHolidayTypeColor(holiday.type).bg,
-                    borderColor: getHolidayTypeColor(holiday.type).border,
+                    backgroundColor: getHolidayTypeColor(holiday.type),
+                    borderColor: getHolidayTypeBorderColor(holiday.type),
                   },
                 ]}
               >
-                <Text style={styles.holidayIcon}>
-                  {getHolidayTypeIcon(holiday.type)}
-                </Text>
                 <View style={styles.holidayContent}>
-                  <Text
-                    style={[
-                      styles.holidayName,
-                      { color: getHolidayTypeColor(holiday.type).text },
-                    ]}
-                  >
-                    {holiday.name}
+                  <Text style={styles.holidayIcon}>
+                    {getHolidayTypeIcon(holiday.type)}
                   </Text>
-                  <Text
-                    style={[
-                      styles.holidayDescription,
-                      { color: getHolidayTypeColor(holiday.type).text },
-                    ]}
-                  >
-                    {holiday.description}
-                  </Text>
-                  <View style={styles.holidayBadge}>
+                  <View style={styles.holidayInfo}>
                     <Text
                       style={[
-                        styles.holidayBadgeText,
-                        { color: getHolidayTypeColor(holiday.type).text },
+                        styles.holidayName,
+                        { color: theme.text },
                       ]}
                     >
-                      {holiday.type.charAt(0).toUpperCase() +
-                        holiday.type.slice(1)}{' '}
-                      Holiday
+                      {holiday.name}
                     </Text>
+                    <Text
+                      style={[
+                        styles.holidayDescription,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      {holiday.description}
+                    </Text>
+                    <View
+                      style={[
+                        styles.holidayBadge,
+                        { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.5)' },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.holidayBadgeText,
+                          { color: theme.text },
+                        ]}
+                      >
+                        {holiday.type.charAt(0).toUpperCase() + holiday.type.slice(1)} Holiday
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
             )}
 
             {/* Attendance Status */}
-            <View
-              style={[
-                styles.section,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}
-            >
-              <View style={styles.sectionHeader}>
+            <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={styles.cardHeader}>
                 <Icon name="calendar" size={16} color={theme.text} />
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>
                   Attendance Status
                 </Text>
               </View>
               <View
-                style={[styles.statusCard, { backgroundColor: statusInfo.bg }]}
+                style={[
+                  styles.statusBox,
+                  { backgroundColor: statusInfo.bgColor },
+                ]}
               >
                 <Icon name={statusInfo.icon} size={24} color={statusInfo.color} />
                 <View style={styles.statusInfo}>
-                  <Text
-                    style={[styles.statusLabel, { color: statusInfo.color }]}
-                  >
+                  <Text style={[styles.statusLabel, { color: statusInfo.color }]}>
                     {statusInfo.label}
                   </Text>
                   {attendance && attendance.status !== 'leave' && (
-                    <Text
-                      style={[
-                        styles.statusTime,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
+                    <Text style={[styles.statusTime, { color: theme.textSecondary }]}>
                       {attendance.attendedTime} / {attendance.totalTime} minutes
                     </Text>
                   )}
@@ -253,17 +204,12 @@ const DateDetailsModal = ({
               </View>
             </View>
 
-            {/* Lecture Breakdown */}
-            {attendance && attendance.lectures && attendance.lectures.length > 0 && (
-              <View
-                style={[
-                  styles.section,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
-              >
-                <View style={styles.sectionHeader}>
+            {/* Lecture-wise Breakdown */}
+            {attendance && attendance.lectures.length > 0 && (
+              <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <View style={styles.cardHeader}>
                   <Icon name="clock" size={16} color={theme.text} />
-                  <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>
                     Lecture Breakdown
                   </Text>
                 </View>
@@ -273,36 +219,21 @@ const DateDetailsModal = ({
                       key={index}
                       style={[
                         styles.lectureItem,
-                        { backgroundColor: theme.gray100 },
+                        { backgroundColor: theme.surface },
                       ]}
                     >
                       <View style={styles.lectureInfo}>
-                        <Text
-                          style={[styles.lectureSubject, { color: theme.text }]}
-                        >
+                        <Text style={[styles.lectureSubject, { color: theme.text }]}>
                           {lecture.subject}
                         </Text>
-                        <Text
-                          style={[
-                            styles.lectureTime,
-                            { color: theme.textSecondary },
-                          ]}
-                        >
+                        <Text style={[styles.lectureTime, { color: theme.textSecondary }]}>
                           {lecture.time} • {lecture.duration} mins
                         </Text>
                       </View>
                       <Icon
                         name={lecture.attended ? 'check-circle' : 'x-circle'}
                         size={20}
-                        color={
-                          lecture.attended
-                            ? isDark
-                              ? '#34D399'
-                              : '#10B981'
-                            : isDark
-                            ? '#F87171'
-                            : '#EF4444'
-                        }
+                        color={lecture.attended ? '#10B981' : '#EF4444'}
                       />
                     </View>
                   ))}
@@ -312,7 +243,7 @@ const DateDetailsModal = ({
 
             {/* Day Summary */}
             {attendance && attendance.status !== 'leave' && (
-              <View style={styles.summaryCard}>
+              <View style={[styles.summaryCard, { backgroundColor: theme.primary }]}>
                 <View style={styles.summaryHeader}>
                   <Icon name="trending-up" size={20} color="#FFFFFF" />
                   <Text style={styles.summaryTitle}>Day Summary</Text>
@@ -321,13 +252,13 @@ const DateDetailsModal = ({
                   <View style={styles.summaryItem}>
                     <Text style={styles.summaryLabel}>Total Classes</Text>
                     <Text style={styles.summaryValue}>
-                      {attendance.lectures?.length || 0}
+                      {attendance.lectures.length}
                     </Text>
                   </View>
                   <View style={styles.summaryItem}>
                     <Text style={styles.summaryLabel}>Attended</Text>
                     <Text style={styles.summaryValue}>
-                      {attendance.lectures?.filter((l) => l.attended).length || 0}
+                      {attendance.lectures.filter((l) => l.attended).length}
                     </Text>
                   </View>
                   <View style={styles.summaryItem}>
@@ -348,11 +279,9 @@ const DateDetailsModal = ({
 
             {/* No Data Message */}
             {!holiday && !attendance && (
-              <View style={styles.noData}>
+              <View style={styles.noDataContainer}>
                 <Icon name="calendar" size={48} color={theme.textSecondary} />
-                <Text
-                  style={[styles.noDataText, { color: theme.textSecondary }]}
-                >
+                <Text style={[styles.noDataText, { color: theme.textSecondary }]}>
                   No data available for this date
                 </Text>
               </View>
@@ -374,14 +303,15 @@ const styles = StyleSheet.create({
   },
   modal: {
     width: '100%',
-    maxWidth: 448,
+    maxWidth: 400,
+    maxHeight: '80%',
     borderRadius: 16,
-    maxHeight: '85%',
+    overflow: 'hidden',
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
   },
   header: {
     flexDirection: 'row',
@@ -394,7 +324,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dateNumber: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     marginBottom: 4,
   },
@@ -403,71 +333,71 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
+    borderRadius: 20,
   },
   content: {
-    maxHeight: '100%',
+    flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    padding: 20,
+    paddingTop: 0,
+    gap: 16,
   },
   holidayCard: {
-    flexDirection: 'row',
-    padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 16,
+    padding: 16,
+  },
+  holidayContent: {
+    flexDirection: 'row',
     gap: 12,
   },
   holidayIcon: {
-    fontSize: 28,
+    fontSize: 32,
   },
-  holidayContent: {
+  holidayInfo: {
     flex: 1,
+    gap: 4,
   },
   holidayName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
   },
   holidayDescription: {
     fontSize: 14,
-    opacity: 0.9,
-    marginBottom: 8,
+    lineHeight: 20,
   },
   holidayBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginTop: 4,
   },
   holidayBadgeText: {
     fontSize: 12,
-    fontWeight: '500',
   },
-  section: {
+  card: {
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    marginBottom: 16,
   },
-  sectionHeader: {
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 12,
   },
-  sectionTitle: {
+  cardTitle: {
     fontSize: 16,
     fontWeight: '600',
   },
-  statusCard: {
+  statusBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
     padding: 12,
     borderRadius: 12,
-    gap: 12,
   },
   statusInfo: {
     flex: 1,
@@ -496,26 +426,24 @@ const styles = StyleSheet.create({
   lectureSubject: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   lectureTime: {
     fontSize: 12,
   },
   summaryCard: {
-    backgroundColor: '#3B82F6',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
   },
   summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   summaryTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
   summaryGrid: {
@@ -528,7 +456,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#BFDBFE',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 4,
   },
   summaryValue: {
@@ -536,13 +464,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  noData: {
+  noDataContainer: {
     alignItems: 'center',
     paddingVertical: 32,
+    gap: 12,
   },
   noDataText: {
     fontSize: 14,
-    marginTop: 12,
   },
 });
 

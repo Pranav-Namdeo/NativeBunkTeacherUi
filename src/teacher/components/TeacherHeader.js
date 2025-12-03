@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { getStyles, colors } from '../styles/teacherStyles';
 import TeacherProfileDialog from './TeacherProfileDialog';
 
-const TeacherHeader = ({ isDark, onToggleTheme, onMenuItemPress }) => {
+const TeacherHeader = ({ isDark, onToggleTheme, onMenuItemPress, onLogout, teacherData }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
   const styles = getStyles(isDark);
@@ -33,7 +33,15 @@ const TeacherHeader = ({ isDark, onToggleTheme, onMenuItemPress }) => {
     }
   };
 
-  const teacherInfo = {
+  // Use teacherData from props or fallback to default
+  const teacherInfo = teacherData ? {
+    name: teacherData.name,
+    email: teacherData.email,
+    department: teacherData.department,
+    employeeId: teacherData.employeeId,
+    subjects: teacherData.subjects || [],
+    photo: teacherData.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${teacherData.name}`,
+  } : {
     name: 'Dr. Priya Sharma',
     email: 'priya.sharma@university.edu',
     department: 'Computer Science',
@@ -122,6 +130,7 @@ const TeacherHeader = ({ isDark, onToggleTheme, onMenuItemPress }) => {
           email: teacherInfo.email,
           profileImage: teacherInfo.photo,
         }}
+        onLogout={onLogout}
       />
     </View>
   );
